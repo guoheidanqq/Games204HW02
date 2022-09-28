@@ -91,10 +91,10 @@ def compute_new_intensity(HDR_image_log_base, HDR_image_log_detail, gamma):
 def gamma_v709(image):
     # image should be in range [0 1 ]
     new_image = image.copy()
-
-
-
-    return
+    for i in range(0, new_image.shape[0]):
+        for j in range(0, new_image.shape[1]):
+            new_image[i, j] = v709(new_image[i, j])
+    return new_image
 
 
 def v709(x):
