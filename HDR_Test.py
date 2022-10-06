@@ -42,13 +42,19 @@ exposure_times = np.array([1 / 1000, 1 / 500, 1 / 250, 1 / 125, 1 / 60, 1 / 30, 
 masks = compute_mask(images)
 weights = get_fusion_weight(images)
 fuse_image = raw_exposure_fuse(images, weights, exposure_times)
+fuse_image_01 = fuse_image / np.max(fuse_image)
+fuse_image_255 = fuse_image_01*255
+fuse_image_uint8 = fuse_image_255.astype(np.uint8)
 fuse_image_uint32 = fuse_image.astype(np.uint32)
+plt.imshow(np.log(1+fuse_image_uint32), cmap='gray')
+plt.show()
 
 color_image = CFA_Interpolation_function(fuse_image_uint32)
 HDR_image_log_base = fastbilateral2d(color_image)
 
-color_image_uint8 = np.log2(color_image + 1).astype(np.uint8)
-plt.imshow(color_image_uint8 / np.max(color_image_uint8))
+color_image_uint8 = color_image
+color_image_01 = color_image_uint8 / np.max(color_image_uint8)
+plt.imshow(color_image_01)
 plt.show()
 
 plt.imshow(fuse_image, cmap='gray')
@@ -76,13 +82,13 @@ image5 = images[5].raw_image
 plt.imshow(image5, cmap='gray')
 plt.show()
 
-cfa_interpolator = CFA_Interpolation(fuse_image, 'malvar', 'rggb', 2 ** 32)
+awb = AWB(fuse_image, [1, 1, 1, 1], 'rggb', 2 ** 32)
+Bayer_awb = awb.execute()
+cfa_interpolator = CFA_Interpolation(Bayer_awb, 'malvar', 'rggb', 2 ** 32)
 cfa_img = cfa_interpolator.execute()
-cfa_img_normalized = cfa_img / np.max(cfa_img)
-plt.imshow(np.log(1 + cfa_img_normalized))
-plt.show()
-
-plt.imshow(cfa_img[..., 1]/np.max(cfa_img), cmap='gray')
+cfa_img_log = np.log(1+cfa_img)
+cfa_img_log_uint8 = cfa_img_log.astype(np.uint8)
+plt.imshow(cfa_img_log_uint8*20)
 plt.show()
 
 # a = imageio.v2.imread('IMG_20220915_192911.dng')

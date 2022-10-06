@@ -10,11 +10,12 @@ def raw_exposure_fuse(images, weights, exposure_times):
     masks = compute_mask(images)
     fuse_weights = np.zeros(weights[0].shape)
     for i in range(0, len(images)):
-        fuse_image = fuse_image + (images[i].raw_image / exposure_times[i]) * weights[i] * masks[i]
+        fuse_image = fuse_image + np.log(1+(images[i].raw_image / exposure_times[i])) * weights[i] * masks[i]
         fuse_weights = fuse_weights + weights[i] * masks[i]
     eps = 10 ** -10
     fuse_weights[fuse_weights <= 0] = eps
     final_image = fuse_image / fuse_weights
+    final_image = np.exp(final_image)
     return final_image
 
 
