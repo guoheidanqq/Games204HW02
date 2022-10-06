@@ -4,6 +4,9 @@ import os
 import sys
 import matplotlib.pyplot as plt
 from HDR_fusion import *
+from BayerDomainProcessor import *
+from RGBDomainProcessor import *
+from YUVDomainProcessor import *
 from skimage import io
 from skimage import data
 import time
@@ -41,7 +44,7 @@ weights = get_fusion_weight(images)
 fuse_image = raw_exposure_fuse(images, weights, exposure_times)
 fuse_image_uint32 = fuse_image.astype(np.uint32)
 
-color_image = CFA_Interpolation(fuse_image_uint32)
+color_image = CFA_Interpolation_function(fuse_image_uint32)
 HDR_image_log_base = fastbilateral2d(color_image)
 
 color_image_uint8 = np.log2(color_image + 1).astype(np.uint8)
@@ -73,7 +76,16 @@ image5 = images[5].raw_image
 plt.imshow(image5, cmap='gray')
 plt.show()
 
+cfa_interpolator = CFA_Interpolation(fuse_image, 'malvar', 'rggb', 2 ** 32)
+cfa_img = cfa_interpolator.execute()
+cfa_img_normalized = cfa_img / np.max(cfa_img)
+plt.imshow(np.log(1 + cfa_img_normalized))
+plt.show()
+
+plt.imshow(cfa_img[..., 1]/np.max(cfa_img), cmap='gray')
+plt.show()
+
 # a = imageio.v2.imread('IMG_20220915_192911.dng')
 # imageio.imwrite('a.jpg', color_image.astype(np.uint8))
 # imageio.imwrite('test1.exr', color_image.astype(np.float64))
-#cv2.imwrite('test1.exr', color_image.astype(np.float64))
+# cv2.imwrite('test1.exr', color_image.astype(np.float64))

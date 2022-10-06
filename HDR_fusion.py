@@ -47,7 +47,7 @@ def get_fusion_weight(images):
 
 # step 2 demosaic the fused raw data
 
-def CFA_Interpolation(fuse_image):
+def CFA_Interpolation_function(fuse_image):
     r_channel = np.zeros(fuse_image.shape, dtype='uint32')
     gr_channel = np.zeros(fuse_image.shape, dtype=np.uint32)
     gb_channel = np.zeros(fuse_image.shape, dtype=np.uint32)
