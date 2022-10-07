@@ -1,6 +1,7 @@
 import rawpy
 import numpy as np
 import imageio
+import cv2
 
 
 # step 1 merge ldr ra  into 32 bit hdr image
@@ -10,7 +11,7 @@ def raw_exposure_fuse(images, weights, exposure_times):
     masks = compute_mask(images)
     fuse_weights = np.zeros(weights[0].shape)
     for i in range(0, len(images)):
-        fuse_image = fuse_image + np.log(1+(images[i].raw_image / exposure_times[i])) * weights[i] * masks[i]
+        fuse_image = fuse_image + np.log(1 + (images[i].raw_image / exposure_times[i])) * weights[i] * masks[i]
         fuse_weights = fuse_weights + weights[i] * masks[i]
     eps = 10 ** -10
     fuse_weights[fuse_weights <= 0] = eps
@@ -71,13 +72,15 @@ def writeEXR(filename):
 
 # step 3 tone mapping with bilateral filter
 
-def fastbilateral2d(HDR_image, space_sigma=0.02, range_sigma=0.4):
+def fastbilateral2d(HDR_image_log, space_sigma=0.02, range_sigma=0.4):
     # image should be in float64
-    image = HDR_image.astype(np.float64)
-    log_image = np.log2(image + 1)
+    image = HDR_image_log.copy()
+    #image = image.astype(np.float32)
     space_sigma = 0.02 * np.min(image.shape[:-1])
     range_sigma = 0.4
-    HDR_image_log_base = log_image
+    d = 2*int(space_sigma) + 1
+    HDR_image_log_base = np.asarray(image)
+    HDR_image_log_base = cv2.bilateralFilter(image, d, range_sigma, space_sigma)
     return HDR_image_log_base
 
 
@@ -92,14 +95,13 @@ def compute_new_intensity(HDR_image_log_base, HDR_image_log_detail, gamma):
 def gamma_v709(image):
     # image should be in range [0 1 ]
     new_image = image.copy()
-    for i in range(0, new_image.shape[0]):
-        for j in range(0, new_image.shape[1]):
-            new_image[i, j] = v709(new_image[i, j])
+    new_image = v709(image)
     return new_image
 
 
+@np.vectorize
 def v709(x):
     if 0 <= x < 0.018:
-        return 4 * x
+        return 4.5 * x
     elif 0.018 <= x < 1:
         return 1.099 * x ** 0.45 - 0.099

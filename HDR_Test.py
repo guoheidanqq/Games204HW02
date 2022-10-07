@@ -43,55 +43,83 @@ masks = compute_mask(images)
 weights = get_fusion_weight(images)
 fuse_image = raw_exposure_fuse(images, weights, exposure_times)
 fuse_image_01 = fuse_image / np.max(fuse_image)
-fuse_image_255 = fuse_image_01*255
+fuse_image_255 = fuse_image_01 * 255
 fuse_image_uint8 = fuse_image_255.astype(np.uint8)
 fuse_image_uint32 = fuse_image.astype(np.uint32)
-plt.imshow(np.log(1+fuse_image_uint32), cmap='gray')
-plt.show()
-
-color_image = CFA_Interpolation_function(fuse_image_uint32)
-HDR_image_log_base = fastbilateral2d(color_image)
-
-color_image_uint8 = color_image
-color_image_01 = color_image_uint8 / np.max(color_image_uint8)
-plt.imshow(color_image_01)
-plt.show()
-
-plt.imshow(fuse_image, cmap='gray')
-plt.show()
-
-plt.imshow(np.log(fuse_image + 1), cmap='gray')
-plt.show()
-
-image0 = images[0].raw_image
-plt.imshow(image0, cmap='gray')
-plt.show()
-image1 = images[1].raw_image
-plt.imshow(image1, cmap='gray')
-plt.show()
-image2 = images[2].raw_image
-plt.imshow(image2, cmap='gray')
-plt.show()
-image3 = images[3].raw_image
-plt.imshow(image3, cmap='gray')
-plt.show()
-image4 = images[4].raw_image
-plt.imshow(image4, cmap='gray')
-plt.show()
-image5 = images[5].raw_image
-plt.imshow(image5, cmap='gray')
+plt.imshow(np.log(1 + fuse_image_uint32), cmap='gray')
 plt.show()
 
 awb = AWB(fuse_image, [1, 1, 1, 1], 'rggb', 2 ** 32)
 Bayer_awb = awb.execute()
 cfa_interpolator = CFA_Interpolation(Bayer_awb, 'malvar', 'rggb', 2 ** 32)
 cfa_img = cfa_interpolator.execute()
-cfa_img_log = np.log(1+cfa_img)
-cfa_img_log_uint8 = cfa_img_log.astype(np.uint8)
-plt.imshow(cfa_img_log_uint8*20)
+cfa_img_01 = cfa_img / np.max(cfa_img)
+cfa_img_01 = np.clip(cfa_img_01 * 1000, 0, 1)
+plt.imshow(cfa_img_01)
 plt.show()
+# plt.imshow(gamma_v709(cfa_img_01))
+# plt.imshow(cfa_img_01)
+# plt.show()
+
+
+cfa_img_01 = data.astronaut()
+plt.imshow(cfa_img_01)
+plt.show()
+
+
+HDR_image_log_base = fastbilateral2d(cfa_img_01, 0.02, 0.4)
+#HDR_image_log_base = cv2.bilateralFilter(cfa_img_01, 10, 75, 75)
+HDR_image_log_base_01 = HDR_image_log_base / 255
+plt.imshow(HDR_image_log_base_01)
+plt.show()
+
+coffee = data.coffee() / 255
+plt.imshow(coffee)
+plt.show()
+
+plt.imshow(gamma_v709(coffee))
+plt.show()
+# color_image = CFA_Interpolation_function(fuse_image_uint32)
+# HDR_image_log_base = fastbilateral2d(color_image)
+#
+# color_image_uint8 = color_image
+# color_image_01 = color_image_uint8 / np.max(color_image_uint8)
+# plt.imshow(color_image_01)
+# plt.show()
+#
+# plt.imshow(fuse_image, cmap='gray')
+# plt.show()
+#
+# plt.imshow(np.log(fuse_image + 1), cmap='gray')
+# plt.show()
+
+# display the original image for fuseing
+# image0 = images[0].raw_image
+# plt.imshow(image0, cmap='gray')
+# plt.show()
+# image1 = images[1].raw_image
+# plt.imshow(image1, cmap='gray')
+# plt.show()
+# image2 = images[2].raw_image
+# plt.imshow(image2, cmap='gray')
+# plt.show()
+# image3 = images[3].raw_image
+# plt.imshow(image3, cmap='gray')
+# plt.show()
+# image4 = images[4].raw_image
+# plt.imshow(image4, cmap='gray')
+# plt.show()
+# image5 = images[5].raw_image
+# plt.imshow(image5, cmap='gray')
+# plt.show()
+
 
 # a = imageio.v2.imread('IMG_20220915_192911.dng')
 # imageio.imwrite('a.jpg', color_image.astype(np.uint8))
 # imageio.imwrite('test1.exr', color_image.astype(np.float64))
 # cv2.imwrite('test1.exr', color_image.astype(np.float64))
+
+
+lena = cv2.imread('lena.jpg')
+cv2.imshow('lena', lena)
+cv2.waitKey(0)
