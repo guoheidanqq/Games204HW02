@@ -6,6 +6,7 @@ Created on Fri Aug 27 19:45:23 2021
 """
 import numpy as np
 from scipy import signal
+from scipy import interpolate
 
 
 # For this file, use numpy only.  Try your best to get the best visual pleasent
@@ -409,20 +410,44 @@ class CFA_Interpolation:
 
     # bilinear interpolation
     def execute_bilinear(self):
-        HEIGHT = self.img.shape[0]
-        WIDTH = self.img.shape[1]
-        R = np.zeros_like(self.img)
-        G = np.zeros_like(self.img)
-        B = np.zeros_like(self.img)
-        R[0::2, 0::2] = self.img[0::2, 0::2]
-        G[0::2, 1::2] = self.img[0::2, 1::2]
-        G[1::2, 0::2] = self.img[1::2, 0::2]
-        B[1::2, 1::2] = self.img[1::2, 1::2]
-
-        x =
-
+        img = self.img.copy()
+        HEIGHT = img.shape[0]
+        WIDTH = img.shape[1]
+        R = np.zeros_like(img)
+        Gr = np.zeros_like(img)
+        Gb = np.zeros_like(img)
+        B = np.zeros_like(img)
+        R[0::2, 0::2] = img[0::2, 0::2]
+        Gr[0::2, 1::2] = img[0::2, 1::2]
+        Gb[1::2, 0::2] = img[1::2, 0::2]
+        B[1::2, 1::2] = img[1::2, 1::2]
+        X_R = np.arange(0, HEIGHT, 2)
+        Y_R = np.arange(0, WIDTH, 2)
+        Z_R = R[0::2, 0::2]
+        f_R = interpolate.interp2d(Y_R, X_R, Z_R, kind='linear')  # Y for cols X for rows
+        X_B = np.arange(1, HEIGHT, 2)
+        Y_B = np.arange(1, WIDTH, 2)
+        Z_B = B[1::2, 1::2]
+        f_B = interpolate.interp2d(Y_B, X_B, Z_B, kind='linear')
+        X_Gr = np.arange(0, HEIGHT, 2)
+        Y_Gr = np.arange(1, WIDTH, 2)
+        Z_Gr = Gr[0::2, 1::2]
+        f_Gr = interpolate.interp2d(Y_Gr, X_Gr, Z_Gr, kind='linear')
+        X_Gb = np.arange(1, HEIGHT, 2)
+        Y_Gb = np.arange(0, WIDTH, 2)
+        Z_Gb = Gb[1::2, 0::2]
+        f_Gb = interpolate.interp2d(Y_Gb, X_Gb, Z_Gb, kind='linear')
+        rows = np.arange(0, HEIGHT, 1)
+        cols = np.arange(0, WIDTH, 1)
+        R_new = f_R(cols, rows)
+        B_new = f_B(cols, rows)
+        Gr_new = f_Gr(cols, rows)
+        Gb_new = f_Gb(cols, rows)
+        R = R_new
+        G = (Gr_new + Gb_new) / 2
+        B = B_new
         img = np.dstack((R, G, B))
-        return self.img
+        return img
 
     def execute(self):
         img_pad = self.padding()

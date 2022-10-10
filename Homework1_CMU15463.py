@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from BayerDomainProcessor import *
 from scipy import interpolate
+from matplotlib import pylab
 
 rawimg_uint16 = io.imread('DSC02878.tiff')
 plt.imshow(rawimg_uint16, cmap='gray')
@@ -34,31 +35,33 @@ plt.show()
 
 cfa_img_pre = img_whitebalanced.copy()
 img = cfa_img_pre
-HEIGHT = img.shape[0]
-WIDTH = img.shape[1]
-R = np.zeros_like(img)
-G = np.zeros_like(img)
-G = np.zeros_like(img)
-B = np.zeros_like(img)
-R[0::2, 0::2] = img[0::2, 0::2]
-G[0::2, 1::2] = img[0::2, 1::2]
-G[1::2, 0::2] = img[1::2, 0::2]
-B[1::2, 1::2] = img[1::2, 1::2]
-X_R = np.arange(0, HEIGHT, 2)
-Y_R = np.arange(0, WIDTH, 2)
-Z_R = R[0::2, 0::2]
-f_R = interpolate.interp2d(Y_R, X_R, Z_R, kind='linear')  # Y for cols X for rows
-X_B = np.arange(1, HEIGHT, 2)
-Y_B = np.arange(1, WIDTH, 2)
-Z_B = B[1::2, 1::2]
-f_B = interpolate.interp2d(Y_B, X_B, Z_B, kind='linear')
-rows = np.arange(0, HEIGHT, 1)
-cols = np.arange(0, WIDTH, 1)
-R_new = f_R(cols, rows)
-B_new = f_B(cols,rows)
+cfa = CFA_Interpolation(img, 'bilinear', 'rggb', 1)
+cfa_img_processed = cfa.execute_bilinear()
+plt.imshow(cfa_img_processed)
+plt.show()
 
-G_rows,G_cols = np.nonzero(G)
-Z_G = G[G_rows,G_cols]
+#    { "Sony ILCE-7M2", 0, 0,
+#	{ 5271,-712,-347,-6153,13653,2763,-1601,2366,7242 } },
+xyz2cam = np.array([5271, -712, -347, -6153, 13653, 2763, -1601, 2366, 7242]) / 10000
+xyz2cam = np.array([[ 0.5271, -0.0712, -0.0347],
+                    [-0.6153,  1.3653,  0.2763],
+                    [-0.1601,  0.2366,  0.7242]])
+srgb2xyz =   np.array(
+              [[0.412453, 0.357580, 0.180423] ,
+              [0.212671, 0.715160, 0.072169],
+              [0.019334, 0.119193, 0.950227]] )
+#xyz2cam = np.matrix(xyz2cam)
+#srgb2xyz =  np.matrix(srgb2xyz)
+srgb2cam = xyz2cam @ srgb2xyz
+cam2srgb = np.linalg.inv(srgb2cam)
+cam2srgb @ cfa_img_processed
 
 
 
+
+# G_rows, G_cols = np.nonzero(G)
+# Z_G = G[G_rows, G_cols]
+# X_G = G_rows[0:10]
+# Y_G = G_cols[0:10]
+# Z_G = Z_G[0:10]
+# f_G = interpolate.interp2d(Y_G, X_G, Z_G, kind='linear')
