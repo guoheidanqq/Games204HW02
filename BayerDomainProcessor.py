@@ -290,6 +290,20 @@ class AWB:
         self.img[self.img > MAXIMUM_VALUE] = MAXIMUM_VALUE
         return self.img
 
+    def execute_gaincontrol(self):
+        R_gain, Gr_gain, Gb_gain, B_gain = self.parameter
+        img = self.img.copy()
+        R = img[0::2, 0::2]
+        GR = img[0::2, 1::2]
+        GB = img[1::2, 0::2]
+        B = img[1::2, 1::2]
+        img[0::2, 0::2] = R * R_gain
+        img[0::2, 1::2] = GR * Gr_gain
+        img[1::2, 0::2] = GB * Gb_gain
+        img[1::2, 1::2] = B * B_gain
+        img = np.clip(img, 0, 1)
+        return img
+
     def execute(self):
         # calculate Gr_avg/R_avg, 1, Gr_avg/Gb_avg, Gr_avg/B_avg and apply to each channel
         # Fill your code here
@@ -392,6 +406,23 @@ class CFA_Interpolation:
     # Fill your code here
 
     # return [r, g, b]
+
+    # bilinear interpolation
+    def execute_bilinear(self):
+        HEIGHT = self.img.shape[0]
+        WIDTH = self.img.shape[1]
+        R = np.zeros_like(self.img)
+        G = np.zeros_like(self.img)
+        B = np.zeros_like(self.img)
+        R[0::2, 0::2] = self.img[0::2, 0::2]
+        G[0::2, 1::2] = self.img[0::2, 1::2]
+        G[1::2, 0::2] = self.img[1::2, 0::2]
+        B[1::2, 1::2] = self.img[1::2, 1::2]
+
+        x =
+
+        img = np.dstack((R, G, B))
+        return self.img
 
     def execute(self):
         img_pad = self.padding()
