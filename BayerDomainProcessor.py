@@ -304,6 +304,26 @@ class AWB:
         img[1::2, 1::2] = B * B_gain
         img = np.clip(img, 0, 1)
         return img
+    def execute_whiteworld(self):
+        img = self.img.copy()
+        R = img[0::2, 0::2]
+        GR = img[0::2, 1::2]
+        GB = img[1::2, 0::2]
+        B = img[1::2, 1::2]
+        R_max =R.max()
+        GR_max = GR.max()
+        GB_max = GB.max()
+        B_max = B.max()
+        R_gain = GR_max/R_max
+        Gr_gain = GR_max/GR_max
+        Gb_gain = GR_max/GR_max
+        B_gain = GR_max/GR_max
+        img[0::2, 0::2] = R * R_gain
+        img[0::2, 1::2] = GR * Gr_gain
+        img[1::2, 0::2] = GB * Gb_gain
+        img[1::2, 1::2] = B * B_gain
+        img = np.clip(img, 0, 1)
+        return img
 
     def execute(self):
         # calculate Gr_avg/R_avg, 1, Gr_avg/Gb_avg, Gr_avg/B_avg and apply to each channel

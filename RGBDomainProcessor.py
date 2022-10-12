@@ -79,3 +79,11 @@ def YUV2RGB(img):
     rgb = np.clip(rgb, 0, 255)
     rgb = rgb.astype(np.uint8)
     return rgb
+
+
+@np.vectorize
+def srgb_non_linear_trans(x):
+    if x <= 0.0031308:
+        return 12.92 * x
+    elif x > 0.0031308:
+        return (1 + 0.055) * np.power(x, 1 / 2.4) - 0.055
