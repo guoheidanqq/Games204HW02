@@ -8,6 +8,8 @@ from RGBDomainProcessor import *
 from scipy import interpolate
 from matplotlib import pylab
 from skimage import color
+from RGBDomainProcessor import *
+from YUVDomainProcessor import *
 
 rawimg_uint16 = io.imread('DSC02878.tiff')
 plt.imshow(rawimg_uint16, cmap='gray')
@@ -31,7 +33,7 @@ gr_gain = paramters[1]
 gb_gain = paramters[2]
 b_gain = paramters[3]
 awb = AWB(img_whitebalancing, paramters, 'rggb', 2 ** 14)
-#img_whitebalanced = awb.execute_gaincontrol()
+# img_whitebalanced = awb.execute_gaincontrol()
 img_whitebalanced = awb.execute_whiteworld()
 plt.imshow(img_whitebalanced, cmap='gray')
 plt.show()
@@ -86,12 +88,41 @@ plt.show()
 awb1 = AWB(cfa_img_cam2srg_brighter, paramters, 'rggb', 2 ** 14)
 cfa_reaw = awb1.execute_whiteworld()
 cfa_img_cam2srg_brighter = cfa_reaw
-cfa_img_ca2srgb_gamma = srgb_non_linear_trans(cfa_img_cam2srg_brighter)
+plt.imshow(cfa_img_cam2srg_brighter)
+plt.show()
+
+# YUV change
+yuv = RGB2YUV(cfa_reaw)
+huescontrol = HueSaturationControl(yuv, -30, 1, 1)
+yuv_adjusted = huescontrol.execute()
+rgb = YUV2RGB(yuv_adjusted)
+plt.imshow(rgb)
+plt.show()
+
+for hue in range(0, 360, 5):
+    yuv = RGB2YUV(cfa_reaw)
+    huescontrol = HueSaturationControl(yuv, hue, 1, 1)
+    yuv_adjusted = huescontrol.execute()
+    rgb = YUV2RGB(yuv_adjusted)
+    plt.imshow(rgb)
+    plt.show()
+    plt.title('hue: '+ str(hue))
+    print(hue)
+
+yuv = yuv_adjusted
+brightControl = BrightnessContrastControl(yuv, 0, 1, 1)  # 0 for default brightnes ,1 for default constrast
+yuvBrighter = brightControl.execute()
+rgb = YUV2RGB(yuvBrighter)
+plt.imshow(rgb)
+plt.show()
+
+cfa_img_cam2srg_brighter = rgb
+cfa_img_ca2srgb_gamma = srgb_pre_gamma_compensation(cfa_img_cam2srg_brighter)
 plt.imshow(cfa_img_ca2srgb_gamma)
 plt.show()
 io.imsave('room.png', cfa_img_ca2srgb_gamma)
 io.imsave('room.jpg', cfa_img_ca2srgb_gamma, quality=90)
-cfa_img_uint8 = (cfa_img_ca2srgb_gamma*255).astype(np.uint8)
+cfa_img_uint8 = (cfa_img_ca2srgb_gamma * 255).astype(np.uint8)
 
 io.imsave('room.png', cfa_img_ca2srgb_gamma)
 io.imsave('room.jpg', cfa_img_ca2srgb_gamma, quality=80)

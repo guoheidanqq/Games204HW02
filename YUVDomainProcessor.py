@@ -48,6 +48,7 @@ class BrightnessContrastControl:
         self.brightness = brightness
         self.contrast = contrast
         self.clip = clip
+        # contrast 是一个系数 >0 的系数  brightness是一个大于0 一般来说小于1的值
 
     def clipping(self):
         np.clip(self.img, 0, self.clip, out=self.img)
@@ -58,9 +59,9 @@ class BrightnessContrastControl:
         img_w = self.img.shape[1]
         # Your code here
         Y = self.img[:, :, 0].copy()
-        Y = Y + self.brightness
-        Y = Y + (Y - 127) * self.contrast
-        self.img[:, :, 0] = Y
+        YY = Y * self.contrast + self.brightness
+        YY = np.clip(YY, 0, 1)
+        self.img[:, :, 0] = YY
         return self.img
 
     # Step Chroma-1 False Color Suppression
@@ -119,19 +120,19 @@ class HueSaturationControl:
         image = self.img.copy()
         U = image[:, :, 1]
         V = image[:, :, 2]
-        Scale_factor = self.saturation / 100
         theta = np.around(self.hue) % 360
-        # saturation 100 is original image， 0 is gray color ，300 is more color
+        # saturation 1 is original image， 0 is gray color ，>1 is more color
         # hue for 0 360 , 0 for nothing change ,180 for complementary color
-        U = (U - 128) * Scale_factor + 128
-        V = (V - 128) * Scale_factor + 128
-        costheta = lut_cos[theta]/256
-        sintheta = lut_sin[theta]/256
+        U = (U - 0.5)
+        V = (V - 0.5)
+        costheta = lut_cos[theta] / 256
+        sintheta = lut_sin[theta] / 256
         UU = U.copy()
         VV = V.copy()
-        UUU = UU * costheta + VV * sintheta
-        VVV = -UU * sintheta + VV * costheta
+        UUU = (UU * costheta + VV * sintheta) * self.saturation + 0.5
+        VVV = (-UU * sintheta + VV * costheta) * self.saturation + 0.5
         image[..., 1] = UUU
         image[..., 2] = VVV
-        #image = np.clip(image, 0, 255.0)
+        image = np.clip(image, 0, 1)
+        # image = np.clip(image, 0, 255.0)
         return image

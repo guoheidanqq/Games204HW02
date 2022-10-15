@@ -49,16 +49,19 @@ def RGB2YUV(img):
     #            - 0.168736 - 0.331264 0.5
     #            0.5 - 0.418688 - 0.081312]   +[0 128 128]
     # JPEG 格式的YCbCr
-    # img 输入值的范围为0-255
+    # img 输入值的范围为0-1
+    #YUV输出范围为0-255
     img = img.copy()
     R = img[:, :, 0]
     G = img[:, :, 1]
     B = img[:, :, 2]
     # Your code here
     Y = 0.299 * R + 0.587 * G + 0.114 * B
-    U = -0.168736 * R - 0.331264 * G + 0.5 * B + 128
-    V = 0.5 * R - 0.418668 * G - 0.081312 * B + 128
-    yuv = np.stack([Y, U, V], axis=2)
+    #U = -0.168736 * R - 0.331264 * G + 0.5 * B + 128
+    #V = 0.5 * R - 0.418668 * G - 0.081312 * B + 128
+    Cr = (R-Y)*0.713 + 0.5
+    Cb = (B-Y)*0.564 + 0.5
+    yuv = np.stack([Y, Cb, Cr], axis=2)
     # yuv = yuv.astype(np.uint8)
     return yuv
 
@@ -67,22 +70,23 @@ def YUV2RGB(img):
     # yuv2rgb = [1.0000 - 0.0000    1.4020
     #            1.0000 - 0.3441 - 0.7141
     #            1.0000    1.7720    0.0000]
+    # input img yuv is in 0-1
     img = img.copy()
     Y = img[:, :, 0]
-    U = img[:, :, 1] - 128
-    V = img[:, :, 2] - 128
+    Cb = img[:, :, 1] - 0.5
+    Cr = img[:, :, 2] - 0.5
     # Your code here
-    R = Y + 1.402 * V
-    G = Y - 0.3441 * U - 0.7141 * V
-    B = Y + 1.772 * U
+    R = Y + 1.403 * Cr
+    G = Y - 0.3441 * Cb - 0.7141 * Cr
+    B = Y + 1.773 * Cb
     rgb = np.stack([R, G, B], axis=2)
-    rgb = np.clip(rgb, 0, 255)
-    rgb = rgb.astype(np.uint8)
+    rgb = np.clip(rgb, 0, 1)
+    #rgb = rgb.astype(np.uint8)
     return rgb
 
 
 @np.vectorize
-def srgb_non_linear_trans(x):
+def srgb_pre_gamma_compensation(x):
     if x <= 0.0031308:
         return 12.92 * x
     elif x > 0.0031308:
