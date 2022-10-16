@@ -72,16 +72,33 @@ def writeEXR(filename):
 
 # step 3 tone mapping with bilateral filter
 
-def fastbilateral2d(HDR_image_log, space_sigma=0.02, range_sigma=0.4):
+
+# fastbilaeral2d  input image 0 - 1 ,
+def fastbilateral2d(HDR_image_log, range_sigma=0.4, space_sigma=0.02):
     # image should be in float64
     image = HDR_image_log.copy()
-    #image = image.astype(np.float32)
+    # image = image.astype(np.float32)
     space_sigma = 0.02 * np.min(image.shape[:-1])
     range_sigma = 0.4
-    d = 2*int(space_sigma) + 1
+    d = 2 * int(space_sigma) + 1
     HDR_image_log_base = np.asarray(image)
-    HDR_image_log_base = cv2.bilateralFilter(image, d, range_sigma, space_sigma)
+    # HDR_image_log_base = cv2.bilateralFilter(image, d, range_sigma, space_sigma)
+
     return HDR_image_log_base
+
+
+def gaussian_kernel(kernel_size, sigma):
+    # make sure your kernel size if odd
+    kernel_size = np.int32(kernel_size) / 2 + 1
+    size = kernel_size / 2
+    x = np.arange(-size, size)
+    y = np.arange(-size, size)
+    [xx, yy] = np.meshgrid(x, y)
+    value = (xx ** xx + yy ** yy) / 2 * sigma ** 2
+    kernel = np.exp(value)
+    norm_sum = np.sum(kernel)
+    norm_kernel = kernel / norm_sum
+    return norm_kernel
 
 
 def compute_new_intensity(HDR_image_log_base, HDR_image_log_detail, gamma):

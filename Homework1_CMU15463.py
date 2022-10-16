@@ -10,6 +10,7 @@ from matplotlib import pylab
 from skimage import color
 from RGBDomainProcessor import *
 from YUVDomainProcessor import *
+from HDR_fusion import *
 
 rawimg_uint16 = io.imread('DSC02878.tiff')
 plt.imshow(rawimg_uint16, cmap='gray')
@@ -99,15 +100,15 @@ rgb = YUV2RGB(yuv_adjusted)
 plt.imshow(rgb)
 plt.show()
 
-for hue in range(0, 360, 5):
-    yuv = RGB2YUV(cfa_reaw)
-    huescontrol = HueSaturationControl(yuv, hue, 1, 1)
-    yuv_adjusted = huescontrol.execute()
-    rgb = YUV2RGB(yuv_adjusted)
-    plt.imshow(rgb)
-    plt.show()
-    plt.title('hue: '+ str(hue))
-    print(hue)
+# for hue in range(0, 360, 5):
+#     yuv = RGB2YUV(cfa_reaw)
+#     huescontrol = HueSaturationControl(yuv, hue, 1, 1)
+#     yuv_adjusted = huescontrol.execute()
+#     rgb = YUV2RGB(yuv_adjusted)
+#     plt.imshow(rgb)
+#     plt.show()
+#     plt.title('hue: '+ str(hue))
+#     print(hue)
 
 yuv = yuv_adjusted
 brightControl = BrightnessContrastControl(yuv, 0, 1, 1)  # 0 for default brightnes ,1 for default constrast
@@ -135,3 +136,15 @@ cfa_img_ca2srgb_gamma_0_255 = cfa_img_ca2srgb_gamma * 255
 # Y_G = G_cols[0:10]
 # Z_G = Z_G[0:10]
 # f_G = interpolate.interp2d(Y_G, X_G, Z_G, kind='linear')
+cfa_img_read = io.imread('room.jpg') / 255
+yuv = RGB2YUV(cfa_img_read)
+YUV = yuv.copy()
+Y = YUV[:, :, 0]  # Y is in 0 1
+plt.imshow(Y, cmap='gray')
+plt.show()
+gray_std2 = np.std(Y)
+space_sigma = 0.4
+
+y_base = fastbilateral2d(Y)
+
+kernel = gaussian_kernel(3, 2)
