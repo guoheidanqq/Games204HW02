@@ -74,27 +74,62 @@ def writeEXR(filename):
 
 
 # fastbilaeral2d  input image 0 - 1 ,
-def fastbilateral2d(HDR_image_log, range_sigma=0.4, space_sigma=0.02):
+def fastbilateral2d(HDR_image_gray, range_sigma=0.4, space_sigma=0.02, kernel_size=5):
     # image should be in float64
-    image = HDR_image_log.copy()
+    image = HDR_image_gray.copy()
+    HEIGHT = image.shape[0]
+    WIDTH = image.shape[1]
     # image = image.astype(np.float32)
     space_sigma = 0.02 * np.min(image.shape[:-1])
     range_sigma = 0.4
-    d = 2 * int(space_sigma) + 1
-    HDR_image_log_base = np.asarray(image)
+    kernel_size = kernel_size
+    kernel_size = np.int32(kernel_size)
+    size = np.int32(kernel_size / 2)
+    half_kernel_size = np.int32()
+    smooth_kernel = gaussian_kernel(kernel_size, space_sigma)
+    local_kernel = np.zeros((kernel_size, kernel_size), dtype=np.float64)
+    image = np.pad(image, ((size, size), (size, size)), 'reflect')
+    newimg = np.zeros_like(image)
+    for x in range(0 + size, HEIGHT + size):
+        for y in range(0 + size, WIDTH + size):
+            local_img = image[x - size:x + size + 1, y - size:y + size + 1]
+            local_kernel = value_kernel(kernel_size, range_sigma, local_img)
+            kernel = smooth_kernel * local_kernel
+            sum = kernel.sum()
+            kernel_norm = kernel / sum
+            value = kernel_norm * local_img
+            newimg[x, y] = value.sum()
+    # d = 2 * int(space_sigma) + 1
+    # HDR_image_log_base = np.asarray(image)
     # HDR_image_log_base = cv2.bilateralFilter(image, d, range_sigma, space_sigma)
+    bi_img = newimg[size:WIDTH + size, size:HEIGHT + size]
+    return bi_img
 
-    return HDR_image_log_base
 
-
-def gaussian_kernel(kernel_size, sigma):
+def gaussian_kernel(kernel_size, space_sigma):
     # make sure your kernel size if odd
-    kernel_size = np.int32(kernel_size) / 2 + 1
-    size = kernel_size / 2
-    x = np.arange(-size, size)
-    y = np.arange(-size, size)
+    kernel_size = np.int32(kernel_size)
+    kernel_size = np.int32(np.int32(kernel_size / 2) * 2 + 1)
+    size = np.int32(kernel_size / 2)
+    x = np.arange(-size, size + 1)
+    y = np.arange(-size, size + 1)
     [xx, yy] = np.meshgrid(x, y)
-    value = (xx ** xx + yy ** yy) / 2 * sigma ** 2
+    value = -(xx * xx + yy * yy) / (2 * space_sigma ** 2)
+    kernel = np.exp(value)
+    norm_sum = np.sum(kernel)
+    norm_kernel = kernel / norm_sum
+    return norm_kernel
+
+
+def value_kernel(kernel_size, range_sigma, local_img):
+    kernel_size = np.int32(kernel_size)
+    kernel_size = np.int32(np.int32(kernel_size / 2) * 2 + 1)
+    size = np.int32(kernel_size / 2)
+    x = np.arange(-size, size + 1)
+    y = np.arange(-size, size + 1)
+    [xx, yy] = np.meshgrid(x, y)
+    f = local_img
+    value = -(f[xx + size, yy + size] - f[size, size]) ** 2 / (2 * range_sigma ** 2)
     kernel = np.exp(value)
     norm_sum = np.sum(kernel)
     norm_kernel = kernel / norm_sum
