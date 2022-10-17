@@ -65,9 +65,9 @@ def CFA_Interpolation_function(fuse_image):
     return color_image
 
 
-def writeEXR(filename):
-    pass
-    return
+def writeEXR(img_hdr, filename):
+    cv2.imwrite(img_hdr,filename)
+
 
 
 # step 3 tone mapping with bilateral filter
@@ -80,8 +80,8 @@ def fastbilateral2d(HDR_image_gray, range_sigma=0.4, space_sigma=0.02, kernel_si
     HEIGHT = image.shape[0]
     WIDTH = image.shape[1]
     # image = image.astype(np.float32)
-    space_sigma = 0.02 * np.min(image.shape[:-1])
-    range_sigma = 0.4
+    space_sigma = space_sigma * np.min(image.shape[:-1])
+    range_sigma = range_sigma
     kernel_size = kernel_size
     kernel_size = np.int32(kernel_size)
     size = np.int32(kernel_size / 2)
@@ -102,7 +102,7 @@ def fastbilateral2d(HDR_image_gray, range_sigma=0.4, space_sigma=0.02, kernel_si
     # d = 2 * int(space_sigma) + 1
     # HDR_image_log_base = np.asarray(image)
     # HDR_image_log_base = cv2.bilateralFilter(image, d, range_sigma, space_sigma)
-    bi_img = newimg[size:WIDTH + size, size:HEIGHT + size]
+    bi_img = newimg[size:HEIGHT + size, size:WIDTH + size]
     return bi_img
 
 

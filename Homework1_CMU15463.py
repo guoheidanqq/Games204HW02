@@ -11,6 +11,7 @@ from skimage import color
 from RGBDomainProcessor import *
 from YUVDomainProcessor import *
 from HDR_fusion import *
+from cp_exr import *
 
 rawimg_uint16 = io.imread('DSC02878.tiff')
 plt.imshow(rawimg_uint16, cmap='gray')
@@ -145,6 +146,20 @@ plt.show()
 gray_std2 = np.std(Y)
 space_sigma = 0.4
 
-y_base = fastbilateral2d(Y)
+range_sigma = 0.02
+space_sigma = 0.001
+kernel_size = 7
+Y_down_N = Y[::8, ::8]
+plt.imshow(Y_down_N, cmap='gray')
+plt.show()
+y_base = fastbilateral2d(Y_down_N, range_sigma, space_sigma, kernel_size)
+plt.imshow(y_base, cmap='gray')
+plt.show()
 
-kernel = gaussian_kernel(3, 2)
+# cv2.imwrite('1.exr',cfa_img_read)
+img = cfa_img_read * (2 ** 14)
+#newImg = img.astype(np.uint16)
+writeEXR('1.exr', img, 'FLOAT')
+sanmiguel = readEXR('sanmiguel_cam25.exr')
+plt.imshow(sanmiguel/np.max(sanmiguel))
+plt.show()

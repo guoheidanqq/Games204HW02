@@ -18,18 +18,18 @@ local_img = np.arange(1, 49 + 1).reshape((7, 7))
 value_kernel = value_kernel(7, 2, local_img)
 
 camera = data.camera() / 255
-plt.imshow(camera, cmap='gray')
-plt.show()
+# plt.imshow(camera, cmap='gray')
+# plt.show()
 
 HDR_image_gray = camera
 std = np.std(camera)
-range_sigma = 0.01
-space_sigma = 0.02
+range_sigma = 0.02
+space_sigma = 0.001
 kernel_size = 7
 img_bilateral = fastbilateral2d(HDR_image_gray, range_sigma, space_sigma, kernel_size)
 plt.imshow(img_bilateral, cmap='gray')
-plt.show()
-plt.title('image bilateral')
+# plt.show()
+# plt.title('image bilateral')
 
 plt.subplot(1,2,1)
 plt.imshow(camera, cmap='gray')
