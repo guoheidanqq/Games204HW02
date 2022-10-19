@@ -20,6 +20,19 @@ def raw_exposure_fuse(images, weights, exposure_times):
     return final_image
 
 
+def raw_exposure_fuse_01(images, weights, exposure_times):
+    fuse_image = np.zeros_like(images[0])
+    masks = compute_mask_01(images)
+    fuse_weights = np.zeros(weights[0].shape)
+    for i in range(0, len(images)):
+        fuse_image = fuse_image + (images[i] / exposure_times[i]) * weights[i] * masks[i]
+        fuse_weights = fuse_weights + weights[i] * masks[i]
+    eps = 10 ** -10
+    fuse_weights[fuse_weights <= 0] = eps
+    final_image = fuse_image / fuse_weights
+    return final_image
+
+
 def compute_mask(images):
     MIN = 0.05 * 2 ** 14
     MAX = 0.95 * 2 ** 14
@@ -33,8 +46,21 @@ def compute_mask(images):
         maskList.append(maski)
     return maskList
 
-
+def compute_mask_01(images):
+    # input image should be in [0 1] of float
+    MIN = 0.05
+    MAX = 0.95
+    maskList = []
+    for i in range(0, len(images)):
+        image = images[i]
+        maski = np.zeros_like(image, dtype=bool)
+        maskaa = image <= MAX
+        maskbb = image >= MIN
+        maski = maskaa & maskbb
+        maskList.append(maski)
+    return maskList
 def get_fusion_weight(images):
+    # input data should be in 0 1
     MAX = 2 ** 14
     weights = []
     for i in range(0, len(images)):
@@ -45,6 +71,29 @@ def get_fusion_weight(images):
         weight = np.exp(image)
         weights.append(weight)
     return weights
+
+
+def get_uniform_weights(images):
+    weights = []
+    for i in range(0, len(images)):
+        weight = np.ones_like(images[i])
+        weights.append(weight)
+    return weights
+
+
+def get_gaussian_weights(images):
+    # input value should be in  [0 1]
+    weights = []
+    for i in range(0, len(images)):
+        image = images[i].copy()
+        weight = np.zeros_like(images[i])
+        weight = -4 * (image - 0.5) ** 2 / (0.5 ** 2)
+        weight = np.exp(image)
+        weights.append(weight)
+    return weights
+
+
+
 
 
 # step 2 demosaic the fused raw data
@@ -66,8 +115,7 @@ def CFA_Interpolation_function(fuse_image):
 
 
 def writeEXR(img_hdr, filename):
-    cv2.imwrite(img_hdr,filename)
-
+    cv2.imwrite(img_hdr, filename)
 
 
 # step 3 tone mapping with bilateral filter
