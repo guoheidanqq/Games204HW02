@@ -54,8 +54,17 @@ Im_HDR = np.exp(Iij_HDR_log_mean)
 
 I_tilt_ij_HDR = (K / Im_HDR) * Iij_HDR
 I_tilt_white = B * np.max(I_tilt_ij_HDR)
-Iij_TM = I_tilt_ij_HDR * (1 + I_tilt_ij_HDR / (I_tilt_white ** 2))/(1+I_tilt_ij_HDR)
+Iij_TM = I_tilt_ij_HDR * (1 + I_tilt_ij_HDR / (I_tilt_white ** 2)) / (1 + I_tilt_ij_HDR)
 
-plt.imshow(np.power(Iij_TM/np.max(Iij_TM), 1))
+plt.imshow(np.power(Iij_TM / np.max(Iij_TM), 1))
 plt.show()
 
+plt.imshow(Iij_TM / np.max(Iij_TM))
+plt.show()
+
+# noise calibration and optima weights
+
+rampImg = np.tile(np.linspace(0, 1, 255), (255, 1))
+plt.imshow(rampImg, cmap='gray')
+plt.show()
+imageio.imwrite('rampgray.png',rampImg)
