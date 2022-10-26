@@ -107,6 +107,24 @@ for i in range(1, 17):
     plt.axis('off')
 plt.show()
 
+images_downsampling_01 = []
+for i in range(0,len(images_downsampling)):
+    tmp = images_downsampling[i]/255.0
+    images_downsampling_01.append(tmp)
+weights = get_tent_weights(images_downsampling_01)
+
+#construct matrix A  b
+Height,Width,channels  = images_downsampling[0].shape
+I = np.zeros((len(images_downsampling),Height*Width*channels))
+K = len(images_downsampling)
+N = 255
+for k in range(0,K):
+    I[k,:] = images_downsampling[k].reshape(-1)
+
+
+A = np.zeros()
+
+
 
 
 

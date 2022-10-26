@@ -46,6 +46,7 @@ def compute_mask(images):
         maskList.append(maski)
     return maskList
 
+
 def compute_mask_01(images):
     # input image should be in [0 1] of float
     MIN = 0.05
@@ -59,6 +60,8 @@ def compute_mask_01(images):
         maski = maskaa & maskbb
         maskList.append(maski)
     return maskList
+
+
 def get_fusion_weight(images):
     # input data should be in 0 1
     MAX = 2 ** 14
@@ -81,6 +84,16 @@ def get_uniform_weights(images):
     return weights
 
 
+def get_tent_weights(images):
+    # image value should be in  [0 1]
+    weights = []
+    for i in range(0, len(images)):
+        z = images[i]
+        weight = np.minimum(z, 1 - z)
+        weights.append(weight)
+    return weights
+
+
 def get_gaussian_weights(images):
     # input value should be in  [0 1]
     weights = []
@@ -91,9 +104,6 @@ def get_gaussian_weights(images):
         weight = np.exp(image)
         weights.append(weight)
     return weights
-
-
-
 
 
 # step 2 demosaic the fused raw data
