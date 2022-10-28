@@ -54,10 +54,10 @@ def compute_mask_01(images):
     maskList = []
     for i in range(0, len(images)):
         image = images[i]
-        maski = np.zeros_like(image, dtype=bool)
+        #maski = np.zeros_like(image, dtype=bool)
         maskaa = image <= MAX
         maskbb = image >= MIN
-        maski = maskaa & maskbb
+        maski = maskaa & maskbb # & numpy logcial and
         maskList.append(maski)
     return maskList
 
@@ -105,14 +105,39 @@ def w_tent(z):
         return 0
 
 
-def g_solve(I, T, lamda, w):
+def g_solve(I, T, w, lamda=1):
+    # I K row N columns , k images N pixels
+    # T each pixels exposure time same dimensions as I
+    # lamda the regulization term
+    # w
     K = I.shape[0]
     N = I.shape[1]
     Z_levels = 256
-    lamda = 1
-    a = 1
-    b = 1
-    return K, b
+    lamda = lamda
+    A = np.zeros((K * N + Z_levels - 2, Z_levels + N))
+    b = np.zeros((A.shape[0], 1))
+    row = 0
+    for z in range(0, 254):
+        A[row, z] = 1 * w[z + 1] * lamda
+        A[row, z + 1] = -2 * w[z + 1] * lamda
+        A[row, z + 2] = 1 * w[z + 1] * lamda
+        row = row + 1
+
+    row = 254
+    for k in range(0, K):
+        for i in range(0, N):
+            z = I[k, i].astype(np.int32)
+            weight = w[z]
+            ex_time = T[k, i]
+            A[row, z] = weight
+            A[row, i + 256] = -weight
+            b[row] = weight * np.log(ex_time)
+            row = row + 1
+
+    X = np.linalg.lstsq(A, b, rcond=None)
+    g = X[0][0:256]
+    le = X[0][256:len(X[0])]
+    return g, le
 
 
 def get_gaussian_weights(images):

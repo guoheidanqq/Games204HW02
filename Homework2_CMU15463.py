@@ -12,36 +12,43 @@ from RGBDomainProcessor import *
 from YUVDomainProcessor import *
 from HDR_fusion import *
 
-# # imread to images list
-# images = []
+# imread to images list
+images = []
+for i in range(1, 17):
+    filename = 'data/door_stack/exposure' + str(i) + '.tiff'
+    imgTmp = io.imread(filename)
+    imgTmp = imgTmp.astype(np.float32)
+    imgTmpNormalized01 = imgTmp / (2 ** 16 - 1)
+    images.append(imgTmpNormalized01)
+
+ex_times = []
+for i in range(1, 17):
+    ex_time = 2 ** (i - 1) / 2048
+    ex_times.append(ex_time)
+exposure_times = np.array(ex_times)
+
+# display images list
 # for i in range(1, 17):
-#     filename = 'data/door_stack/exposure' + str(i) + '.tiff'
-#     imgTmp = io.imread(filename)
-#     imgTmp = imgTmp.astype(np.float32)
-#     imgTmpNormalized01 = imgTmp / (2 ** 16 - 1)
-#     images.append(imgTmpNormalized01)
-#
-# ex_times = []
-# for i in range(1, 17):
-#     ex_time = 2 ** (i - 1) / 2048
-#     ex_times.append(ex_time)
-# exposure_times = np.array(ex_times)
-#
-# # display images list
-# # for i in range(1, 17):
-# #     plt.subplot(4, 4, i)
-# #     plt.imshow(images[i - 1])
-# #     plt.axis('off')
-# # plt.show()
-#
-# masks = compute_mask_01(images)
-# weights = get_gaussian_weights(images)
-# fuse_image = raw_exposure_fuse_01(images, weights, exposure_times)
-#
-# #
-# fuse_image_01 = fuse_image / np.max(fuse_image)
-# plt.imshow(np.power(fuse_image_01, 0.45))
+#     plt.subplot(4, 4, i)
+#     plt.imshow(images[i - 1])
+#     plt.axis('off')
 # plt.show()
+
+masks = compute_mask_01(images)
+weights = get_gaussian_weights(images)
+fuse_image = raw_exposure_fuse_01(images, weights, exposure_times)
+
+#
+fuse_image_01 = fuse_image / np.max(fuse_image)
+fuse_image_gamma = np.power(fuse_image_01,0.45)
+plt.imshow(fuse_image_gamma *10)
+x = plt.ginput(3)
+plt.show()
+
+plt.imshow(images[15])
+plt.show()
+
+
 #
 # # Tone mapping
 # K = 0.05
@@ -70,97 +77,126 @@ from HDR_fusion import *
 # imageio.imwrite('rampgray.png', rampImg)
 
 
-# imread to images list
-images = []
-for i in range(1, 17):
-    filename = 'data/door_stack/exposure' + str(i) + '.jpg'
-    imgTmp = io.imread(filename)
-    imgTmp = imgTmp.astype(np.uint8)
-    imgTmpNormalized01 = imgTmp
-    images.append(imgTmpNormalized01)
+# # imread to images list
+# images = []
+# for i in range(1, 17):
+#     filename = 'data/door_stack/exposure' + str(i) + '.jpg'
+#     imgTmp = io.imread(filename)
+#     imgTmp = imgTmp.astype(np.uint8)
+#     imgTmpNormalized01 = imgTmp
+#     images.append(imgTmpNormalized01)
+#
+# ex_times = []
+# for i in range(1, 17):
+#     ex_time = 2 ** (i - 1) / 2048
+#     ex_times.append(ex_time)
+# exposure_times = np.array(ex_times)
+#
+# # display images list
+# for i in range(1, 17):
+#     plt.subplot(4, 4, i)
+#     plt.imshow(images[i - 1])
+#     plt.axis('off')
+# plt.show()
+#
+# N = 200
+# images_downsampling = []
+# for i in range(0, 16):
+#     img = images[i]
+#     img = img[::N, ::N]
+#     images_downsampling.append(img)
+#
+# for i in range(1, 17):
+#     plt.subplot(4, 4, i)
+#     plt.imshow(images_downsampling[i - 1])
+#     plt.axis('off')
+# plt.show()
+#
+# images_downsampling_01 = []
+# for i in range(0, len(images_downsampling)):
+#     tmp = images_downsampling[i] / 255.0
+#     images_downsampling_01.append(tmp)
+# weights = get_tent_weights(images_downsampling_01)
+#
+# # construct matrix A  b
+# Height, Width, channels = images_downsampling[0].shape
+# I = np.zeros((len(images_downsampling), Height * Width * channels))
+# T = np.zeros_like(I)
+# for i in range(0, T.shape[0]):
+#     T[i, :] = exposure_times[i]
+#
+# K = len(images_downsampling)
+# N = 256
+# pixelTotal = I.shape[1]
+# for k in range(0, K):
+#     I[k, :] = images_downsampling[k].reshape(-1)
+#
+# N = 256
+# K = 16
+# pixelTotal = 1800
+# lamda = 50
+# z = np.arange(0, 256) / 255.0
+# w = w_tent(z)
+# plt.plot(z, w)
+# plt.show()
+#
+# g, le = g_solve(I, T, w, lamda)
+# z = np.arange(0, 256)
+# plt.plot(z, g)
+# plt.show()
+# recovered_radiance = np.exp(np.reshape(le, images_downsampling[0].shape))
+# plt.imshow(recovered_radiance / np.max(recovered_radiance))
+# plt.show()
+#
+# # use g function to recover the linear radiance
+# images_linear = []
+# for i in range(0, 16):
+#     img = g[images[i].astype(np.int32)]
+#     img_exp = np.exp(img[:, :, :, 0])
+#     images_linear.append(img_exp/np.max(img_exp))
+#
+# # display images linear  list
+# for i in range(1, 17):
+#     plt.subplot(4, 4, i)
+#     plt.imshow(images_linear[i - 1])
+#     plt.axis('off')
+# plt.show()
+#
+#
+# plt.imshow(images_linear[15])
+# plt.show()
 
-ex_times = []
-for i in range(1, 17):
-    ex_time = 2 ** (i - 1) / 2048
-    ex_times.append(ex_time)
-exposure_times = np.array(ex_times)
+# K = I.shape[0]
+# N = I.shape[1]
+# Z_levels = 256
+# lamda = 100
+# A = np.zeros((K * N + Z_levels - 2, Z_levels + N))
+# b = np.zeros((A.shape[0], 1))
+# row = 0
+# for z in range(0, 254):
+#     A[row, z] = 1 * w[z + 1] * lamda
+#     A[row, z + 1] = -2 * w[z + 1] * lamda
+#     A[row, z + 2] = 1 * w[z + 1] * lamda
+#     row = row + 1
+#
+# row = 254
+# for k in range(0, K):
+#     for i in range(0, N):
+#         z = I[k, i].astype(np.int32)
+#         weight = w[z]
+#         ex_time = T[k, i]
+#         A[row, z] = weight
+#         A[row, i + 256] = -weight
+#         b[row] = weight * np.log(ex_time)
+#         row = row + 1
+#
+# X = np.linalg.lstsq(A, b, rcond=None)
+#
+# g = X[0][0:256]
+# z = np.arange(0, 256)
+# plt.plot(z, g)
+# plt.show()
 
-# display images list
-for i in range(1, 17):
-    plt.subplot(4, 4, i)
-    plt.imshow(images[i - 1])
-    plt.axis('off')
-plt.show()
-
-N = 200
-images_downsampling = []
-for i in range(0, 16):
-    img = images[i]
-    img = img[::N, ::N]
-    images_downsampling.append(img)
-
-for i in range(1, 17):
-    plt.subplot(4, 4, i)
-    plt.imshow(images_downsampling[i - 1])
-    plt.axis('off')
-plt.show()
-
-images_downsampling_01 = []
-for i in range(0, len(images_downsampling)):
-    tmp = images_downsampling[i] / 255.0
-    images_downsampling_01.append(tmp)
-weights = get_tent_weights(images_downsampling_01)
-
-# construct matrix A  b
-Height, Width, channels = images_downsampling[0].shape
-I = np.zeros((len(images_downsampling), Height * Width * channels))
-T = np.zeros_like(I)
-for i in range(0, T.shape[0]):
-    T[i, :] = exposure_times[i]
-
-K = len(images_downsampling)
-N = 256
-pixelTotal = I.shape[1]
-for k in range(0, K):
-    I[k, :] = images_downsampling[k].reshape(-1)
-
-N = 256
-K = 16
-pixelTotal = 1800
-lamda = 1
-z = np.arange(0, 256) / 255.0
-w = w_tent(z)
-plt.plot(z, w)
-plt.show()
-
-a = g_solve(I, T, lamda, w)
-
-K = I.shape[0]
-N = I.shape[1]
-Z_levels = 256
-lamda = 1
-A = np.zeros((K * N + Z_levels - 1, Z_levels + N))
-b = np.zeros((A.shape[0], 1))
-row = 0
-for z in range(0, 254):
-    A[row, z] = 1 * w[z + 1] * lamda
-    A[row, z + 1] = -2 * w[z + 1] * lamda
-    A[row, z + 2] = 1 * w[z + 1] * lamda
-    row = row + 1
-
-row = 254
-for k in range(0, K):
-    for i in range(0, N):
-        z = I[k, i].astype(np.int32)
-        weight = w[z]
-        ex_time = T[k, i]
-        A[row, z] = weight
-        A[row, i + 256] = -weight
-        b[row] = weight * np.log(ex_time)
-        row = row + 1
-
-
-k
 
 # initialize the lamda term
 
