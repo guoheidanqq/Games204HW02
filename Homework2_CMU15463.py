@@ -115,8 +115,8 @@ weights = get_tent_weights(images_downsampling_01)
 Height, Width, channels = images_downsampling[0].shape
 I = np.zeros((len(images_downsampling), Height * Width * channels))
 T = np.zeros_like(I)
-for i in range(0,T.shape[0]):
-    T[i,:] = exposure_times[i]
+for i in range(0, T.shape[0]):
+    T[i, :] = exposure_times[i]
 
 K = len(images_downsampling)
 N = 256
@@ -128,15 +128,42 @@ N = 256
 K = 16
 pixelTotal = 1800
 lamda = 1
-z = np.arange(0, 256)/255.0
+z = np.arange(0, 256) / 255.0
 w = w_tent(z)
-plt.plot(z,w)
+plt.plot(z, w)
 plt.show()
 
-a ,b = g_solve(I ,T ,lamda,w)
+a = g_solve(I, T, lamda, w)
+
+K = I.shape[0]
+N = I.shape[1]
+Z_levels = 256
+lamda = 1
+A = np.zeros((K * N + Z_levels - 1, Z_levels + N))
+b = np.zeros((A.shape[0], 1))
+row = 0
+for z in range(0, 254):
+    A[row, z] = 1 * w[z + 1] * lamda
+    A[row, z + 1] = -2 * w[z + 1] * lamda
+    A[row, z + 2] = 1 * w[z + 1] * lamda
+    row = row + 1
+
+row = 254
+for k in range(0, K):
+    for i in range(0, N):
+        z = I[k, i].astype(np.int32)
+        weight = w[z]
+        ex_time = T[k, i]
+        A[row, z] = weight
+        A[row, i + 256] = -weight
+        b[row] = weight * np.log(ex_time)
+        row = row + 1
 
 
-A = np.zeros((3,4))
+k
+
+# initialize the lamda term
+
 
 # noise calibration
 # noise_images = []

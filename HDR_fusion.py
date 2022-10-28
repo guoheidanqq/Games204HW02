@@ -106,9 +106,13 @@ def w_tent(z):
 
 
 def g_solve(I, T, lamda, w):
+    K = I.shape[0]
+    N = I.shape[1]
+    Z_levels = 256
+    lamda = 1
     a = 1
     b = 1
-    return a
+    return K, b
 
 
 def get_gaussian_weights(images):
