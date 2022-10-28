@@ -70,8 +70,6 @@ from HDR_fusion import *
 # imageio.imwrite('rampgray.png', rampImg)
 
 
-
-
 # imread to images list
 images = []
 for i in range(1, 17):
@@ -95,10 +93,10 @@ for i in range(1, 17):
 plt.show()
 
 N = 200
-images_downsampling =[]
-for i in range(0,16):
+images_downsampling = []
+for i in range(0, 16):
     img = images[i]
-    img = img[::N,::N]
+    img = img[::N, ::N]
     images_downsampling.append(img)
 
 for i in range(1, 17):
@@ -108,36 +106,37 @@ for i in range(1, 17):
 plt.show()
 
 images_downsampling_01 = []
-for i in range(0,len(images_downsampling)):
-    tmp = images_downsampling[i]/255.0
+for i in range(0, len(images_downsampling)):
+    tmp = images_downsampling[i] / 255.0
     images_downsampling_01.append(tmp)
 weights = get_tent_weights(images_downsampling_01)
 
-#construct matrix A  b
-Height,Width,channels  = images_downsampling[0].shape
-I = np.zeros((len(images_downsampling),Height*Width*channels))
+# construct matrix A  b
+Height, Width, channels = images_downsampling[0].shape
+I = np.zeros((len(images_downsampling), Height * Width * channels))
+T = np.zeros_like(I)
+for i in range(0,T.shape[0]):
+    T[i,:] = exposure_times[i]
+
 K = len(images_downsampling)
-N = 255
-for k in range(0,K):
-    I[k,:] = images_downsampling[k].reshape(-1)
+N = 256
+pixelTotal = I.shape[1]
+for k in range(0, K):
+    I[k, :] = images_downsampling[k].reshape(-1)
+
+N = 256
+K = 16
+pixelTotal = 1800
+lamda = 1
+z = np.arange(0, 256)/255.0
+w = w_tent(z)
+plt.plot(z,w)
+plt.show()
+
+a ,b = g_solve(I ,T ,lamda,w)
 
 
-A = np.zeros()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+A = np.zeros((3,4))
 
 # noise calibration
 # noise_images = []

@@ -94,6 +94,23 @@ def get_tent_weights(images):
     return weights
 
 
+@np.vectorize
+def w_tent(z):
+    if 0 <= z <= 1:
+        if z <= 1 - z:
+            return z
+        else:
+            return 1 - z
+    else:
+        return 0
+
+
+def g_solve(I, T, lamda, w):
+    a = 1
+    b = 1
+    return a
+
+
 def get_gaussian_weights(images):
     # input value should be in  [0 1]
     weights = []
