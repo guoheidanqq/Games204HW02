@@ -11,6 +11,8 @@ from skimage import color
 from RGBDomainProcessor import *
 from YUVDomainProcessor import *
 from HDR_fusion import *
+from matplotlib.patches import Rectangle
+from cp_hw2 import *
 
 # imread to images list
 images = []
@@ -41,9 +43,48 @@ fuse_image = raw_exposure_fuse_01(images, weights, exposure_times)
 #
 fuse_image_01 = fuse_image / np.max(fuse_image)
 fuse_image_gamma = np.power(fuse_image_01,0.45)
+
+
 plt.imshow(fuse_image_gamma *10)
-x = plt.ginput(3)
+#[x,y] = plt.ginput()
+#row 1
+plt.gca().add_patch(Rectangle((3310,625),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3485,625),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3635,625),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3785,625),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+#row2
+plt.gca().add_patch(Rectangle((3310,800),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3485,800),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3635,800),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3785,800),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+#row3
+plt.gca().add_patch(Rectangle((3310,950),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3485,950),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3635,950),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3785,950),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+# row4
+plt.gca().add_patch(Rectangle((3310,1125),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3485,1125),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3635,1125),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3785,1125),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+# row5
+plt.gca().add_patch(Rectangle((3310,1275),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3485,1275),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3635,1275),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3785,1275),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+# row6
+plt.gca().add_patch(Rectangle((3310,1450),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3485,1450),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3635,1450),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3785,1450),50,50,linewidth=1,edgecolor='r',facecolor='none'))
 plt.show()
+
+#create rectangle patches
+
+color_set = read_color_checker_from_image(fuse_image_01)
+r,g,b = read_colorchecker_gm()
+gray = (r+g+b)/3
+
 
 plt.imshow(images[15])
 plt.show()
