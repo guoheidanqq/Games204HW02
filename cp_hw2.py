@@ -518,7 +518,7 @@ def readHDR(name):
     return raw_in[:, :, ::-1]
 
 
-def read_color_checker_from_image(image,  patch_size=50):
+def read_color_checker_from_image(image, patch_size=50):
     # column,           row1
     #                   y ,  x
     top_left_list = ((3310, 625),
@@ -551,10 +551,17 @@ def read_color_checker_from_image(image,  patch_size=50):
                      (3635, 1450),
                      (3785, 1450)
                      )
-    color_set = np.zeros((24 * 2500, 3))
-    for i in range(0, len(top_left_list)):
-        x = top_left_list[i][1]
-        y = top_left_list[i][0]
-        color_patch = image[x:x + 50, y:y + 50, :].reshape(-1,3)
-        color_set[2500*i:2500*(i+1),:]= color_patch
+    color_set = np.zeros((6 * 50, 4 * 50, 3))
+    k = 0
+    for i in range(0, 6):
+        for j in range(0, 4):
+            x = top_left_list[k][1]
+            y = top_left_list[k][0]
+            color_patch = image[x:x + 50, y:y + 50, :]
+            color_set[i * 50:(i + 1) * 50, j * 50:(j + 1) * 50, :] = color_patch
+            k = k + 1
+    #rot 90 clock wise
+    color_set = np.rot90(color_set, k=-1, axes=(0, 1))
     return color_set
+
+

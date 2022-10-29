@@ -42,53 +42,81 @@ fuse_image = raw_exposure_fuse_01(images, weights, exposure_times)
 
 #
 fuse_image_01 = fuse_image / np.max(fuse_image)
-fuse_image_gamma = np.power(fuse_image_01,0.45)
+fuse_image_gamma = np.power(fuse_image_01, 0.45)
 
-
-plt.imshow(fuse_image_gamma *10)
-#[x,y] = plt.ginput()
-#row 1
-plt.gca().add_patch(Rectangle((3310,625),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3485,625),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3635,625),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3785,625),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-#row2
-plt.gca().add_patch(Rectangle((3310,800),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3485,800),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3635,800),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3785,800),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-#row3
-plt.gca().add_patch(Rectangle((3310,950),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3485,950),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3635,950),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3785,950),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.imshow(fuse_image_gamma * 10)
+# [x,y] = plt.ginput()
+# row 1
+plt.gca().add_patch(Rectangle((3310, 625), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3485, 625), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3635, 625), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3785, 625), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# row2
+plt.gca().add_patch(Rectangle((3310, 800), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3485, 800), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3635, 800), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3785, 800), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# row3
+plt.gca().add_patch(Rectangle((3310, 950), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3485, 950), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3635, 950), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3785, 950), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
 # row4
-plt.gca().add_patch(Rectangle((3310,1125),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3485,1125),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3635,1125),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3785,1125),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3310, 1125), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3485, 1125), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3635, 1125), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3785, 1125), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
 # row5
-plt.gca().add_patch(Rectangle((3310,1275),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3485,1275),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3635,1275),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3785,1275),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3310, 1275), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3485, 1275), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3635, 1275), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3785, 1275), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
 # row6
-plt.gca().add_patch(Rectangle((3310,1450),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3485,1450),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3635,1450),50,50,linewidth=1,edgecolor='r',facecolor='none'))
-plt.gca().add_patch(Rectangle((3785,1450),50,50,linewidth=1,edgecolor='r',facecolor='none'))
+plt.gca().add_patch(Rectangle((3310, 1450), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3485, 1450), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3635, 1450), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+plt.gca().add_patch(Rectangle((3785, 1450), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
 plt.show()
 
-#create rectangle patches
+# create rectangle patches
 
-color_set = read_color_checker_from_image(fuse_image_01)
-r,g,b = read_colorchecker_gm()
-gray = (r+g+b)/3
+color_set = read_color_checker_from_image(fuse_image_gamma)
+r, g, b = read_colorchecker_gm()
+color_checker_4_6 = np.stack((r, g, b), axis=2)
+plt.imshow(color_checker_4_6)
+plt.show()
+
+plt.imshow(fuse_image_gamma*10)
+plt.show()
+
+color_checker_gm_50_50 = np.zeros_like(color_set)
+for i in range(0, 4):
+    for j in range(0, 6):
+        color_checker_gm_50_50[i * 50:i * 50 + 50, j * 50:j * 50 + 50] = color_checker_4_6[i, j]
+plt.imshow(color_checker_gm_50_50)
+plt.show()
+
+# construct A  4 * 60000
+
+homo_ones_matrix = np.ones((color_set.shape[0], color_set.shape[1]))
+color_set_homo = np.stack((color_set[:, :, 0], color_set[:, :, 1], color_set[:, :, 0], homo_ones_matrix), axis=2)
+color_checker_gm_50_50_homo = np.stack(
+    (color_checker_gm_50_50[:, :, 0], color_checker_gm_50_50[:, :, 1], color_checker_gm_50_50[:, :, 2],
+     homo_ones_matrix), axis=2)
+A = color_set_homo.reshape(-1,4)
+b = color_checker_gm_50_50_homo.reshape(-1,4)
+X = np.linalg.lstsq(A,b,rcond=None)
+color_correction_matrix = X[0]
+
+# construct b
 
 
+gray = (r + g + b) / 3
+
+plt.imshow(color_set / np.max(color_set))
+plt.show()
 plt.imshow(images[15])
 plt.show()
-
 
 #
 # # Tone mapping
