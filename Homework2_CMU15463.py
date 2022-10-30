@@ -80,24 +80,29 @@ plt.show()
 
 # create rectangle patches
 
-color_set = read_color_checker_from_image(fuse_image_gamma)
+color_set = read_color_checker_from_image(fuse_image_01)
 r, g, b = read_colorchecker_gm()
 color_checker_4_6 = np.stack((r, g, b), axis=2)
 plt.imshow(color_checker_4_6)
 plt.show()
 
-plt.imshow(fuse_image_gamma*10)
+plt.imshow(np.clip(fuse_image_01*2000,0,1))
 plt.show()
 
 color_checker_gm_50_50 = np.zeros_like(color_set)
 for i in range(0, 4):
     for j in range(0, 6):
         color_checker_gm_50_50[i * 50:i * 50 + 50, j * 50:j * 50 + 50] = color_checker_4_6[i, j]
+
+
+plt.imshow(color_set*1000)
+plt.show()
 plt.imshow(color_checker_gm_50_50)
 plt.show()
 
 # construct A  4 * 60000
-
+# construct b
+# and use lstsq to solve color correction matrix
 homo_ones_matrix = np.ones((color_set.shape[0], color_set.shape[1]))
 color_set_homo = np.stack((color_set[:, :, 0], color_set[:, :, 1], color_set[:, :, 0], homo_ones_matrix), axis=2)
 color_checker_gm_50_50_homo = np.stack(
@@ -108,15 +113,28 @@ b = color_checker_gm_50_50_homo.reshape(-1,4)
 X = np.linalg.lstsq(A,b,rcond=None)
 color_correction_matrix = X[0]
 
-# construct b
 
 
-gray = (r + g + b) / 3
+
+
 
 plt.imshow(color_set / np.max(color_set))
 plt.show()
 plt.imshow(images[15])
 plt.show()
+
+img = fuse_image_01.reshape(-1,3)
+img = np.hstack((img,np.ones((img.shape[0],1))))
+img_corrected = img@color_correction_matrix
+img_corrected = img_corrected[:,0:3]
+img_corrected = img_corrected.reshape(fuse_image_01.shape)
+
+plt.imshow(np.clip(fuse_image_01*2000,0,1))
+plt.show()
+
+plt.imshow(np.clip(img_corrected,0,1))
+plt.show()
+
 
 #
 # # Tone mapping
