@@ -54,10 +54,10 @@ def compute_mask_01(images):
     maskList = []
     for i in range(0, len(images)):
         image = images[i]
-        #maski = np.zeros_like(image, dtype=bool)
+        # maski = np.zeros_like(image, dtype=bool)
         maskaa = image <= MAX
         maskbb = image >= MIN
-        maski = maskaa & maskbb # & numpy logcial and
+        maski = maskaa & maskbb  # & numpy logcial and
         maskList.append(maski)
     return maskList
 
@@ -179,7 +179,7 @@ def writeEXR(img_hdr, filename):
 
 # fastbilaeral2d  input image 0 - 1 ,
 def fastbilateral2d(HDR_image_gray, range_sigma=0.4, space_sigma=0.02, kernel_size=5):
-    # image should be in float64
+    # image should be in float64 channel 1 , for example gray channel
     image = HDR_image_gray.copy()
     HEIGHT = image.shape[0]
     WIDTH = image.shape[1]
@@ -208,6 +208,92 @@ def fastbilateral2d(HDR_image_gray, range_sigma=0.4, space_sigma=0.02, kernel_si
     # HDR_image_log_base = cv2.bilateralFilter(image, d, range_sigma, space_sigma)
     bi_img = newimg[size:HEIGHT + size, size:WIDTH + size]
     return bi_img
+
+
+def bilateral2d_color_joint(img_ambient, img_flash, range_sigma=0.4, space_sigma=5):
+    # image should be in float64  channel 3 ,for example color image
+    # space sigma should be something integer in 1-64,
+    # kenel size = 4* space sigma + 1
+    #space_sigma = space_sigma * np.min(image.shape[:-1])
+    img_ambient = img_ambient.copy()
+    img_flash = img_flash.copy()
+    HEIGHT = img_ambient.shape[0]
+    WIDTH = img_ambient.shape[1]
+
+    range_sigma = range_sigma
+    kernel_size = 4*np.int(space_sigma)+1
+    kernel_size = np.int32(kernel_size)
+    size = np.int32(kernel_size / 2)
+    smooth_kernel = gaussian_kernel(kernel_size, space_sigma)
+    smooth_kernel = np.stack((smooth_kernel, smooth_kernel, smooth_kernel), axis=2)
+    local_kernel = np.zeros((kernel_size, kernel_size, 3), dtype=np.float64)
+    img_ambient = np.pad(img_ambient, ((size, size), (size, size), (0, 0)), 'reflect')
+    img_flash = np.pad(img_flash, ((size, size), (size, size), (0, 0)), 'reflect')
+    newimg = np.zeros_like(img_ambient)
+
+    for x in range(0 + size, HEIGHT + size):
+        for y in range(0 + size, WIDTH + size):
+            # x = 6
+            # y = 378
+            local_img = img_flash[x - size:x + size + 1, y - size:y + size + 1, :]
+            local_kernel = value_kernel_color(kernel_size, range_sigma, local_img)
+            kernel = smooth_kernel * local_kernel
+            sum = kernel.sum(axis=(0, 1))
+            kernel_norm = kernel / sum
+            value = kernel_norm * local_img
+            newimg[x, y, :] = value.sum(axis=(0, 1))
+            #print(f'x{x} y{y}')
+
+    bi_img = newimg[size:HEIGHT + size, size:WIDTH + size, :]
+    return bi_img
+
+
+def bilateral2d_color(HDR_image_gray, range_sigma=0.4, space_sigma=5):
+    # image should be in float64  channel 3 ,for example color image
+    # space sigma should be something integer in 1-64,
+    # kenel size = 4* space sigma + 1
+    #space_sigma = space_sigma * np.min(image.shape[:-1])
+    image = HDR_image_gray.copy()
+    HEIGHT = image.shape[0]
+    WIDTH = image.shape[1]
+
+    range_sigma = range_sigma
+    kernel_size = 4*np.int(space_sigma)+1
+    kernel_size = np.int32(kernel_size)
+    size = np.int32(kernel_size / 2)
+    smooth_kernel = gaussian_kernel(kernel_size, space_sigma)
+    smooth_kernel = np.stack((smooth_kernel, smooth_kernel, smooth_kernel), axis=2)
+    local_kernel = np.zeros((kernel_size, kernel_size, 3), dtype=np.float64)
+    image = np.pad(image, ((size, size), (size, size), (0, 0)), 'reflect')
+    newimg = np.zeros_like(image)
+
+    for x in range(0 + size, HEIGHT + size):
+        for y in range(0 + size, WIDTH + size):
+            local_img = image[x - size:x + size + 1, y - size:y + size + 1, :]
+            local_kernel = value_kernel_color(kernel_size, range_sigma, local_img)
+            kernel = smooth_kernel * local_kernel
+            sum = kernel.sum(axis=(0, 1))
+            kernel_norm = kernel / sum
+            value = kernel_norm * local_img
+            newimg[x, y, :] = value.sum(axis=(0, 1))
+
+    bi_img = newimg[size:HEIGHT + size, size:WIDTH + size, :]
+    return bi_img
+
+
+def value_kernel_color(kernel_size, range_sigma, local_img):
+    kernel_size = np.int32(kernel_size)
+    kernel_size = np.int32(np.int32(kernel_size / 2) * 2 + 1)
+    size = np.int32(kernel_size / 2)
+    x = np.arange(-size, size + 1)
+    y = np.arange(-size, size + 1)
+    [xx, yy] = np.meshgrid(x, y)
+    f = local_img
+    value = -(f[xx + size, yy + size, :] - f[size, size, :]) ** 2 / (2 * range_sigma ** 2)
+    kernel = np.exp(value)
+    norm_sum = np.sum(kernel, axis=(0, 1))
+    norm_kernel = kernel / norm_sum
+    return norm_kernel
 
 
 def gaussian_kernel(kernel_size, space_sigma):
