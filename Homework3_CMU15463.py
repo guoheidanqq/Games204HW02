@@ -12,126 +12,155 @@ from RGBDomainProcessor import *
 from YUVDomainProcessor import *
 from HDR_fusion import *
 
-# part 1 bilateral filtering
-lamp_ambient = io.imread('data/lamp/lamp_ambient.tif')  # iso 1600
-lamp_flash = io.imread('data/lamp/lamp_flash.tif')  # iso 200
+
+# part 2 gradient domain processing
+museum_ambient = io.imread('data/museum/museum_ambient.png')
+museum_flash = io.imread('data/museum/museum_flash.png')
 plt.figure()
-plt.subplot(1, 2, 1)
+plt.subplot(1,2,1)
 plt.title('ambient')
-plt.imshow(lamp_ambient)
-plt.subplot(1, 2, 2)
-plt.imshow(lamp_flash)
+plt.imshow(museum_ambient)
+plt.subplot(1,2,2)
+plt.imshow(museum_flash)
 plt.title('flash')
 plt.show()
-
 N = 2
-image_ambient_01 = lamp_ambient / 255.0
+image_ambient_01 = museum_ambient / 255.0
 image_ambient_01 = image_ambient_01[::N, ::N, :]
-image_flash_01 = lamp_flash / 255.0
+image_flash_01 = museum_flash / 255.0
 image_flash_01 = image_flash_01[::N, ::N, :]
 plt.figure()
 plt.subplot(1, 2, 1)
 plt.imshow(image_ambient_01)
-plt.title('ambient image down sampling 8')
+plt.title(f'ambient image down sampling {N}')
 plt.subplot(1, 2, 2)
 plt.imshow(image_flash_01)
-plt.title('flash image down sampling 8')
+plt.title(f'flash image down sampling {N}')
 plt.show()
 
-# suggest space sigma  is 0.05 0.1 total image size
-range_sigma = 0.15 # sigma range suggest 0.05 0.25
-space_sigma = 3  # kernel size 4 *sigma + 1
-
-image_ambient_01_base = bilateral2d_color(image_ambient_01, range_sigma, space_sigma)
-image_flash_01_base = bilateral2d_color(image_flash_01, range_sigma, space_sigma)
-plt.figure()
-plt.subplot(1, 2, 1)
-plt.imshow(image_ambient_01_base)
-plt.title('ambient base')
-plt.subplot(1, 2, 2)
-plt.imshow(image_flash_01_base)
-plt.title('flash base')
-plt.show()
-
-A = image_ambient_01
-A_base = image_flash_01_base
-F = image_flash_01
-F_base = image_flash_01_base
-epsilon = 0.02  # papper suggest
-F_detail = (F + epsilon) / (F_base + epsilon)
-plt.figure()
-plt.imshow(F_detail)
-plt.title('F detail')
-plt.show()
-
-A_noise_reduction = bilateral2d_color_joint(A, F, range_sigma, space_sigma)
-plt.figure()
-plt.imshow(A_noise_reduction)
-plt.title('A_NR')
-plt.show()
-# compute A_NR  by joint bilateral filtering
+I = image_ambient_01
+B = get_image_boundary(image_ambient_01)
+I_init_star = np.zeros_like(B)
+I_boundary_star =(1 - B )*I
 
 
-# compute A_detail
-A_detail = A_noise_reduction * F_detail
-plt.figure()
-plt.imshow(A_detail)
-plt.title('A_detail')
-plt.show()
-
-# to compute the
-F_linear_ISO200 = np.power(image_flash_01, 2.2)
-A_linear_ISO1600 = np.power(image_ambient_01, 2.2)
-A_linear_ISO200 = A_linear_ISO1600 * 200 / 1600
-
-F_linear = F_linear_ISO200
-A_linear = A_linear_ISO200
-tau_shadow = 0.01
-F_minus_A = F_linear - A_linear
-M_shadow = F_minus_A <= tau_shadow
-M_shadow_01 = M_shadow.astype(np.float64)
-
-plt.figure()
-plt.subplot(1, 3, 1)
-plt.imshow(A_linear)
-plt.title('A linear')
-plt.subplot(1, 3, 2)
-plt.imshow(F_linear)
-plt.title('F linear')
-plt.subplot(1, 3, 3)
-plt.imshow(M_shadow_01)
-plt.title('Mask shadow ')
-plt.show()
 
 
-# put all together
-A_final = (1-M_shadow)*A_noise_reduction*F_detail + M_shadow * A_base
-plt.figure()
-plt.imshow(A_final)
-plt.title('final result')
-plt.show()
-
-plt.figure()
-plt.subplot(1, 3, 1)
-plt.imshow(image_ambient_01)
-plt.title('ambient image down sampling 8')
-plt.subplot(1, 3, 2)
-plt.imshow(image_flash_01)
-plt.title('flash image down sampling 8')
-plt.subplot(1,3,3)
-plt.imshow(A_final)
-plt.title('A final')
-plt.show()
 
 
-# # part 2 gradient domain processing
-# museum_ambient = io.imread('data/museum/museum_ambient.png')
-# museum_flash = io.imread('data/museum/museum_flash.png')
-# plt.figure(2)
-# plt.subplot(1,2,1)
+
+
+
+
+# # part 1 bilateral filtering
+# lamp_ambient = io.imread('data/lamp/lamp_ambient.tif')  # iso 1600
+# lamp_flash = io.imread('data/lamp/lamp_flash.tif')  # iso 200
+# plt.figure()
+# plt.subplot(1, 2, 1)
 # plt.title('ambient')
-# plt.imshow(museum_ambient)
-# plt.subplot(1,2,2)
-# plt.imshow(museum_flash)
+# plt.imshow(lamp_ambient)
+# plt.subplot(1, 2, 2)
+# plt.imshow(lamp_flash)
 # plt.title('flash')
 # plt.show()
+#
+# N = 2
+# image_ambient_01 = lamp_ambient / 255.0
+# image_ambient_01 = image_ambient_01[::N, ::N, :]
+# image_flash_01 = lamp_flash / 255.0
+# image_flash_01 = image_flash_01[::N, ::N, :]
+# plt.figure()
+# plt.subplot(1, 2, 1)
+# plt.imshow(image_ambient_01)
+# plt.title('ambient image down sampling 8')
+# plt.subplot(1, 2, 2)
+# plt.imshow(image_flash_01)
+# plt.title('flash image down sampling 8')
+# plt.show()
+#
+# # suggest space sigma  is 0.05 0.1 total image size
+# range_sigma = 0.15 # sigma range suggest 0.05 0.25
+# space_sigma = 3  # kernel size 4 *sigma + 1
+#
+# image_ambient_01_base = bilateral2d_color(image_ambient_01, range_sigma, space_sigma)
+# image_flash_01_base = bilateral2d_color(image_flash_01, range_sigma, space_sigma)
+# plt.figure()
+# plt.subplot(1, 2, 1)
+# plt.imshow(image_ambient_01_base)
+# plt.title('ambient base')
+# plt.subplot(1, 2, 2)
+# plt.imshow(image_flash_01_base)
+# plt.title('flash base')
+# plt.show()
+#
+# A = image_ambient_01
+# A_base = image_flash_01_base
+# F = image_flash_01
+# F_base = image_flash_01_base
+# epsilon = 0.02  # papper suggest
+# F_detail = (F + epsilon) / (F_base + epsilon)
+# plt.figure()
+# plt.imshow(F_detail)
+# plt.title('F detail')
+# plt.show()
+#
+# A_noise_reduction = bilateral2d_color_joint(A, F, range_sigma, space_sigma)
+# plt.figure()
+# plt.imshow(A_noise_reduction)
+# plt.title('A_NR')
+# plt.show()
+# # compute A_NR  by joint bilateral filtering
+#
+#
+# # compute A_detail
+# A_detail = A_noise_reduction * F_detail
+# plt.figure()
+# plt.imshow(A_detail)
+# plt.title('A_detail')
+# plt.show()
+#
+# # to compute the
+# F_linear_ISO200 = np.power(image_flash_01, 2.2)
+# A_linear_ISO1600 = np.power(image_ambient_01, 2.2)
+# A_linear_ISO200 = A_linear_ISO1600 * 200 / 1600
+#
+# F_linear = F_linear_ISO200
+# A_linear = A_linear_ISO200
+# tau_shadow = 0.01
+# F_minus_A = F_linear - A_linear
+# M_shadow = F_minus_A <= tau_shadow
+# M_shadow_01 = M_shadow.astype(np.float64)
+#
+# plt.figure()
+# plt.subplot(1, 3, 1)
+# plt.imshow(A_linear)
+# plt.title('A linear')
+# plt.subplot(1, 3, 2)
+# plt.imshow(F_linear)
+# plt.title('F linear')
+# plt.subplot(1, 3, 3)
+# plt.imshow(M_shadow_01)
+# plt.title('Mask shadow ')
+# plt.show()
+#
+#
+# # put all together
+# A_final = (1-M_shadow)*A_noise_reduction*F_detail + M_shadow * A_base
+# plt.figure()
+# plt.imshow(A_final)
+# plt.title('final result')
+# plt.show()
+#
+# plt.figure()
+# plt.subplot(1, 3, 1)
+# plt.imshow(image_ambient_01)
+# plt.title('ambient image down sampling 8')
+# plt.subplot(1, 3, 2)
+# plt.imshow(image_flash_01)
+# plt.title('flash image down sampling 8')
+# plt.subplot(1,3,3)
+# plt.imshow(A_final)
+# plt.title('A final')
+# plt.show()
+
+

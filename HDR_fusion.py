@@ -214,14 +214,14 @@ def bilateral2d_color_joint(img_ambient, img_flash, range_sigma=0.4, space_sigma
     # image should be in float64  channel 3 ,for example color image
     # space sigma should be something integer in 1-64,
     # kenel size = 4* space sigma + 1
-    #space_sigma = space_sigma * np.min(image.shape[:-1])
+    # space_sigma = space_sigma * np.min(image.shape[:-1])
     img_ambient = img_ambient.copy()
     img_flash = img_flash.copy()
     HEIGHT = img_ambient.shape[0]
     WIDTH = img_ambient.shape[1]
 
     range_sigma = range_sigma
-    kernel_size = 4*np.int(space_sigma)+1
+    kernel_size = 4 * np.int(space_sigma) + 1
     kernel_size = np.int32(kernel_size)
     size = np.int32(kernel_size / 2)
     smooth_kernel = gaussian_kernel(kernel_size, space_sigma)
@@ -242,7 +242,7 @@ def bilateral2d_color_joint(img_ambient, img_flash, range_sigma=0.4, space_sigma
             kernel_norm = kernel / sum
             value = kernel_norm * local_img
             newimg[x, y, :] = value.sum(axis=(0, 1))
-            #print(f'x{x} y{y}')
+            # print(f'x{x} y{y}')
 
     bi_img = newimg[size:HEIGHT + size, size:WIDTH + size, :]
     return bi_img
@@ -252,13 +252,13 @@ def bilateral2d_color(HDR_image_gray, range_sigma=0.4, space_sigma=5):
     # image should be in float64  channel 3 ,for example color image
     # space sigma should be something integer in 1-64,
     # kenel size = 4* space sigma + 1
-    #space_sigma = space_sigma * np.min(image.shape[:-1])
+    # space_sigma = space_sigma * np.min(image.shape[:-1])
     image = HDR_image_gray.copy()
     HEIGHT = image.shape[0]
     WIDTH = image.shape[1]
 
     range_sigma = range_sigma
-    kernel_size = 4*np.int(space_sigma)+1
+    kernel_size = 4 * np.int(space_sigma) + 1
     kernel_size = np.int32(kernel_size)
     size = np.int32(kernel_size / 2)
     smooth_kernel = gaussian_kernel(kernel_size, space_sigma)
@@ -347,3 +347,9 @@ def v709(x):
         return 4.5 * x
     elif 0.018 <= x < 1:
         return 1.099 * x ** 0.45 - 0.099
+
+
+def get_image_boundary(image):
+    B = np.zeros_like(image)
+    B[1:-1,1:-1,:] = 1
+    return B
