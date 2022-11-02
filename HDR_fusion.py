@@ -2,6 +2,8 @@ import rawpy
 import numpy as np
 import imageio
 import cv2
+import scipy
+from scipy import signal
 
 
 # step 1 merge ldr ra  into 32 bit hdr image
@@ -353,3 +355,35 @@ def get_image_boundary(image):
     B = np.zeros_like(image)
     B[1:-1,1:-1,:] = 1
     return B
+
+
+
+def Gradient(image):
+    image_pad = np.pad(image,((1,1),(1,1),(0,0)))
+    Ix = np.diff(image_pad,axis=0)
+    Ix = Ix[1:,1:-1,:]
+    Iy = np.diff(image_pad,axis=1)
+    Iy = Iy[1:-1,1:,:]
+    return Ix, Iy
+
+def Divergence(image):
+    Ix, Iy = Gradient(image)
+    Ix_x,Ix_y = Gradient(Ix)
+    Iy_x,Iy_y = Gradient(Iy)
+    div = Ix_x + Ix_y + Iy_x + Iy_y
+    return div
+
+
+
+
+def Laplacian_Filtering(image):
+    R = image[:,:,0]
+    G = image[:,:,1]
+    B = image[:,:,2]
+    lap_filter = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
+    R_lap_fil = signal.convolve2d(R, lap_filter, mode='full', boundary='fill', fillvalue='0')
+    G_lap_fil = signal.convolve2d(G,lap_filter,mode='full',boundary='fill',fillvalue=0)
+    B_lap_fil = signal.convolve2d(B, lap_filter, mode='full', boundary='fill', fillvalue=0)
+    image_lap_fil = np.stack((R_lap_fil,G_lap_fil,B_lap_fil),axis = 2)
+    return image_lap_fil
+

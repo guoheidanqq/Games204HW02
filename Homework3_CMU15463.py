@@ -12,15 +12,16 @@ from RGBDomainProcessor import *
 from YUVDomainProcessor import *
 from HDR_fusion import *
 
-
 # part 2 gradient domain processing
 museum_ambient = io.imread('data/museum/museum_ambient.png')
 museum_flash = io.imread('data/museum/museum_flash.png')
+museum_ambient = museum_ambient[:, :, :-1]
+museum_flash = museum_flash[:, :, :-1]
 plt.figure()
-plt.subplot(1,2,1)
+plt.subplot(1, 2, 1)
 plt.title('ambient')
 plt.imshow(museum_ambient)
-plt.subplot(1,2,2)
+plt.subplot(1, 2, 2)
 plt.imshow(museum_flash)
 plt.title('flash')
 plt.show()
@@ -41,16 +42,42 @@ plt.show()
 I = image_ambient_01
 B = get_image_boundary(image_ambient_01)
 I_init_star = np.zeros_like(B)
-I_boundary_star =(1 - B )*I
+I_boundary_star = (1 - B) * I
+I_star = B * I_init_star + (1 - B) * I_boundary_star
+I_star_lap_fil = Laplacian_Filtering(I)
+plt.figure()
+plt.subplot(1, 3, 1)
+plt.imshow(B)
+plt.title('B mask')
+plt.axis('off')
+plt.subplot(1, 3, 2)
+plt.imshow(np.abs(I_star_lap_fil))
+plt.title('laplacian filterig I ')
+plt.subplot(1, 3, 3)
+plt.imshow(I_star)
+plt.title('I*')
+plt.show()
 
+Ix, Iy = Gradient(I)
+plt.figure()
+plt.subplot(1, 2, 1)
+plt.imshow(np.abs(Ix))
+plt.title('Ix')
+plt.subplot(1, 2, 2)
+plt.imshow(np.abs(Iy))
+plt.title('Iy')
+plt.show()
 
-
-
-
-
-
-
-
+I_div = Divergence(I)
+I_laplacian = Laplacian_Filtering(I)
+plt.figure()
+plt.subplot(1, 2, 1)
+plt.imshow(np.abs(I_div))
+plt.title('divergence I ')
+plt.subplot(1, 2, 2)
+plt.imshow(np.abs(I_laplacian))
+plt.title('laplacian I ')
+plt.show()
 
 # # part 1 bilateral filtering
 # lamp_ambient = io.imread('data/lamp/lamp_ambient.tif')  # iso 1600
@@ -162,5 +189,3 @@ I_boundary_star =(1 - B )*I
 # plt.imshow(A_final)
 # plt.title('A final')
 # plt.show()
-
-
