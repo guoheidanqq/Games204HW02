@@ -39,18 +39,18 @@ plt.imshow(image_flash_01)
 plt.title(f'flash image down sampling {N}')
 plt.show()
 
+# Itest = np.arange(1, 21).reshape(4, 5)
+# #Itest = np.arange(1, 100).reshape(9, 11)
+# Itest = np.stack((Itest, Itest, Itest), axis = 2)
 
-Itest = np.arange(1, 100).reshape(9, 11)
-Itest = np.stack((Itest, Itest, Itest), axis = 2)
 
-
-I = Itest
+# I = Itest
 I = image_ambient_01.astype(np.int32)
 B = get_image_boundary(I)
 I_init_star = np.zeros_like(B)
 I_boundary_star = (1 - B) * I
 I_star = B * I_init_star + (1 - B) * I_boundary_star
-I_star_lap_fil = Laplacian_Filtering(I)
+I_star_lap_fil = Laplacian(I)
 plt.figure()
 plt.subplot(1, 3, 1)
 plt.imshow(B)
@@ -64,28 +64,45 @@ plt.imshow(I_star)
 plt.title('I*')
 plt.show()
 
-Ix, Iy = Gradient(I)
+Ix_left, Iy_left = Gradient_Left(I)
+Ixx_right, Iyx_right = Gradient_Right(Ix_left)
+Ixy_right, Iyy_right = Gradient_Right(Iy_left)
 I_div = Divergence(I)
-Ilap = Laplacian_Filtering(I)
+Ilap = Laplacian(I)
 plt.figure()
 plt.subplot(1, 2, 1)
-plt.imshow(np.abs(Ix))
+plt.imshow(np.abs(Ix_left))
 plt.title('Ix')
 plt.subplot(1, 2, 2)
-plt.imshow(np.abs(Iy))
+plt.imshow(np.abs(Iy_left))
 plt.title('Iy')
 plt.show()
 
-I_div = Divergence(I)
-I_laplacian = Laplacian_Filtering(I)
 plt.figure()
 plt.subplot(1, 2, 1)
 plt.imshow(np.abs(I_div))
 plt.title('divergence I ')
 plt.subplot(1, 2, 2)
-plt.imshow(np.abs(I_laplacian))
+plt.imshow(np.abs(I_div))
 plt.title('laplacian I ')
 plt.show()
+
+ambient_x, ambient_y = Gradient_Left(image_ambient_01)
+flash_x, flash_y = Gradient_Left(image_flash_01)
+M = gradient_orientation_coherency_map(image_flash_01, image_ambient_01)
+weight_satuation_map = satuation_weight_map(image_flash_01)
+plt.subplot(1, 4, 1)
+plt.imshow(ambient_x)
+plt.subplot(1, 4, 2)
+plt.imshow(ambient_x)
+plt.subplot(1, 4, 3)
+plt.imshow(M)
+plt.title('gradient coherency map')
+plt.subplot(1,4,4)
+plt.imshow(weight_satuation_map)
+plt.title('weight satuation map')
+plt.show()
+
 
 # # part 1 bilateral filtering
 # lamp_ambient = io.imread('data/lamp/lamp_ambient.tif')  # iso 1600

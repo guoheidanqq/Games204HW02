@@ -357,7 +357,7 @@ def get_image_boundary(image):
     return B
 
 
-def Gradient(image):
+def Gradient_Left(image):
     image_pad_x = np.pad(image, ((1, 0), (0, 0), (0, 0)))
     image_pad_y = np.pad(image, ((0, 0), (1, 0), (0, 0)))
     Ix = np.diff(image_pad_x, axis=0)
@@ -365,37 +365,63 @@ def Gradient(image):
     return Ix, Iy
 
 
+def Gradient_Right(image):
+    image_pad_x = np.pad(image, ((0, 1), (0, 0), (0, 0)))
+    image_pad_y = np.pad(image, ((0, 0), (0, 1), (0, 0)))
+    Ix = np.diff(image_pad_x, axis=0)
+    Iy = np.diff(image_pad_y, axis=1)
+    return Ix, Iy
+
+
+def Gradient(image):
+    Ix_left, Iy_left = Gradient_Left(image)
+    Ix_right, Iy_right = Gradient_Right(image)
+    Ix = (Ix_left + Ix_right) / 2
+    Iy = (Iy_left + Iy_right) / 2
+    return Ix, Iy
+
+
 def Divergence(image):
-    # rows = image.shape[0]
-    # cols = image.shape[1]
     image_pad_x = np.pad(image, ((1, 0), (0, 0), (0, 0)))
     image_pad_y = np.pad(image, ((0, 0), (1, 0), (0, 0)))
     Ix = np.diff(image_pad_x, axis=0)
     Iy = np.diff(image_pad_y, axis=1)
-    Ix_pad_x = np.pad(Ix, ((1, 0), (0, 0), (0, 0)))
-    Ix_pad_y = np.pad(Ix, ((0, 0), (1, 0), (0, 0)))
-    Iy_pad_x = np.pad(Iy, ((1, 0), (0, 0), (0, 0)))
-    Iy_pad_y = np.pad(Iy, ((0, 0), (1, 0), (0, 0)))
+    Ix_pad_x = np.pad(Ix, ((0, 1), (0, 0), (0, 0)))
+    Iy_pad_y = np.pad(Iy, ((0, 0), (0, 1), (0, 0)))
     Ix_x = np.diff(Ix_pad_x, axis=0)
-    Ix_y = np.diff(Ix_pad_y, axis=1)
-    Iy_x = np.diff(Iy_pad_x, axis=0)
     Iy_y = np.diff(Iy_pad_y, axis=1)
-    div = Ix_x + Ix_y + Iy_x + Iy_y
-    # Ix_x = Ix_x[0:rows, 2:cols+2, 0:3]
-    # Ix_y = Ix_y[1:rows+1, 1:cols+1, 0:3]
-    # Iy_x = Iy_x[1:rows+1, 1:cols+1, 0:3]
-    # Iy_y = Iy_y[2:rows+2, 0:cols, 0:3]
-    # div = Ix_x + Iy_y
+    div = Ix_x + Iy_y
     return div
 
 
-def Laplacian_Filtering(image):
+def gradient_orientation_coherency_map(ambient_image, flash_image):
+    phi = flash_image
+    a = ambient_image
+    phi_x, phi_y = Gradient_Left(phi)
+    a_x, a_y = Gradient_Left(a)
+    eps = 10 ** -6
+    phi_norm = np.sqrt(phi_x ** 2 + phi_y ** 2)
+    a_norm = np.sqrt(a_x ** 2 + phi_y ** 2)
+    denominator = phi_norm * a_norm + eps
+    numerator = np.abs(phi_x * a_x + phi_y * a_y)
+    map = numerator / denominator
+    return np.clip(map, 0, 1)
+
+
+def satuation_weight_map(flash_image):
+    tau_s = 0.9
+    sigma = 40
+    weight_map = np.tanh(sigma * (flash_image - 0.9))
+    return weight_map
+
+
+def Laplacian(image):
     R = image[:, :, 0]
     G = image[:, :, 1]
     B = image[:, :, 2]
     lap_filter = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
-    R_lap_fil = signal.convolve2d(R, lap_filter, mode='full', boundary='fill', fillvalue='0')
-    G_lap_fil = signal.convolve2d(G, lap_filter, mode='full', boundary='fill', fillvalue=0)
-    B_lap_fil = signal.convolve2d(B, lap_filter, mode='full', boundary='fill', fillvalue=0)
+    R_lap_fil = signal.convolve2d(R, lap_filter, mode='same', boundary='fill', fillvalue='0')
+    G_lap_fil = signal.convolve2d(G, lap_filter, mode='same', boundary='fill', fillvalue=0)
+    B_lap_fil = signal.convolve2d(B, lap_filter, mode='same', boundary='fill', fillvalue=0)
     image_lap_fil = np.stack((R_lap_fil, G_lap_fil, B_lap_fil), axis=2)
     return image_lap_fil
