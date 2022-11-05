@@ -353,37 +353,49 @@ def v709(x):
 
 def get_image_boundary(image):
     B = np.zeros_like(image)
-    B[1:-1,1:-1,:] = 1
+    B[1:-1, 1:-1, :] = 1
     return B
 
 
-
 def Gradient(image):
-    image_pad = np.pad(image,((1,1),(1,1),(0,0)))
-    Ix = np.diff(image_pad,axis=0)
-    Ix = Ix[1:,1:-1,:]
-    Iy = np.diff(image_pad,axis=1)
-    Iy = Iy[1:-1,1:,:]
+    image_pad_x = np.pad(image, ((1, 0), (0, 0), (0, 0)))
+    image_pad_y = np.pad(image, ((0, 0), (1, 0), (0, 0)))
+    Ix = np.diff(image_pad_x, axis=0)
+    Iy = np.diff(image_pad_y, axis=1)
     return Ix, Iy
 
+
 def Divergence(image):
-    Ix, Iy = Gradient(image)
-    Ix_x,Ix_y = Gradient(Ix)
-    Iy_x,Iy_y = Gradient(Iy)
+    # rows = image.shape[0]
+    # cols = image.shape[1]
+    image_pad_x = np.pad(image, ((1, 0), (0, 0), (0, 0)))
+    image_pad_y = np.pad(image, ((0, 0), (1, 0), (0, 0)))
+    Ix = np.diff(image_pad_x, axis=0)
+    Iy = np.diff(image_pad_y, axis=1)
+    Ix_pad_x = np.pad(Ix, ((1, 0), (0, 0), (0, 0)))
+    Ix_pad_y = np.pad(Ix, ((0, 0), (1, 0), (0, 0)))
+    Iy_pad_x = np.pad(Iy, ((1, 0), (0, 0), (0, 0)))
+    Iy_pad_y = np.pad(Iy, ((0, 0), (1, 0), (0, 0)))
+    Ix_x = np.diff(Ix_pad_x, axis=0)
+    Ix_y = np.diff(Ix_pad_y, axis=1)
+    Iy_x = np.diff(Iy_pad_x, axis=0)
+    Iy_y = np.diff(Iy_pad_y, axis=1)
     div = Ix_x + Ix_y + Iy_x + Iy_y
+    # Ix_x = Ix_x[0:rows, 2:cols+2, 0:3]
+    # Ix_y = Ix_y[1:rows+1, 1:cols+1, 0:3]
+    # Iy_x = Iy_x[1:rows+1, 1:cols+1, 0:3]
+    # Iy_y = Iy_y[2:rows+2, 0:cols, 0:3]
+    # div = Ix_x + Iy_y
     return div
 
 
-
-
 def Laplacian_Filtering(image):
-    R = image[:,:,0]
-    G = image[:,:,1]
-    B = image[:,:,2]
+    R = image[:, :, 0]
+    G = image[:, :, 1]
+    B = image[:, :, 2]
     lap_filter = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
     R_lap_fil = signal.convolve2d(R, lap_filter, mode='full', boundary='fill', fillvalue='0')
-    G_lap_fil = signal.convolve2d(G,lap_filter,mode='full',boundary='fill',fillvalue=0)
+    G_lap_fil = signal.convolve2d(G, lap_filter, mode='full', boundary='fill', fillvalue=0)
     B_lap_fil = signal.convolve2d(B, lap_filter, mode='full', boundary='fill', fillvalue=0)
-    image_lap_fil = np.stack((R_lap_fil,G_lap_fil,B_lap_fil),axis = 2)
+    image_lap_fil = np.stack((R_lap_fil, G_lap_fil, B_lap_fil), axis=2)
     return image_lap_fil
-

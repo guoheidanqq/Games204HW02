@@ -26,7 +26,7 @@ plt.imshow(museum_flash)
 plt.title('flash')
 plt.show()
 N = 2
-image_ambient_01 = museum_ambient / 255.0
+image_ambient_01 = museum_ambient
 image_ambient_01 = image_ambient_01[::N, ::N, :]
 image_flash_01 = museum_flash / 255.0
 image_flash_01 = image_flash_01[::N, ::N, :]
@@ -39,8 +39,14 @@ plt.imshow(image_flash_01)
 plt.title(f'flash image down sampling {N}')
 plt.show()
 
-I = image_ambient_01
-B = get_image_boundary(image_ambient_01)
+
+Itest = np.arange(1, 100).reshape(9, 11)
+Itest = np.stack((Itest, Itest, Itest), axis = 2)
+
+
+I = Itest
+I = image_ambient_01.astype(np.int32)
+B = get_image_boundary(I)
 I_init_star = np.zeros_like(B)
 I_boundary_star = (1 - B) * I
 I_star = B * I_init_star + (1 - B) * I_boundary_star
@@ -59,6 +65,8 @@ plt.title('I*')
 plt.show()
 
 Ix, Iy = Gradient(I)
+I_div = Divergence(I)
+Ilap = Laplacian_Filtering(I)
 plt.figure()
 plt.subplot(1, 2, 1)
 plt.imshow(np.abs(Ix))
