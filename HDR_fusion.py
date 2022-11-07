@@ -393,6 +393,15 @@ def Divergence(image):
     div = Ix_x + Iy_y
     return div
 
+def Divergence_Gradient(Ix,Iy):
+    # Ix Iy use gradient_left to compute
+    Ix_pad_x = np.pad(Ix, ((0, 1), (0, 0), (0, 0)))
+    Iy_pad_y = np.pad(Iy, ((0, 0), (0, 1), (0, 0)))
+    Ix_x = np.diff(Ix_pad_x, axis=0)
+    Iy_y = np.diff(Iy_pad_y, axis=1)
+    div = Ix_x + Iy_y
+    return div
+
 
 def gradient_orientation_coherency_map(ambient_image, flash_image):
     phi = flash_image
@@ -425,3 +434,19 @@ def Laplacian(image):
     B_lap_fil = signal.convolve2d(B, lap_filter, mode='same', boundary='fill', fillvalue=0)
     image_lap_fil = np.stack((R_lap_fil, G_lap_fil, B_lap_fil), axis=2)
     return image_lap_fil
+
+
+def Gradient_Field_Integration_CGD(ambient_image_01, flash_image_01):
+    # ambient image  flash image shoulde be in [0 1]
+    # D : divergence of Phi
+    # I_init_star zeros images
+    # I_init_star, B,I_boundary_star,
+    #D, I_init_star, B, I_boundary_star, N=10, eps=10 ** -6
+    I = ambient_image_01
+    B = get_image_boundary(I)
+    I_init_star = np.zeros_like(B)
+    I_boundary_star = (1 - B) * I
+    I_star = B * I_init_star + (1 - B) * I_boundary_star
+    I_star_lap_fil = Laplacian(I)
+
+    return N

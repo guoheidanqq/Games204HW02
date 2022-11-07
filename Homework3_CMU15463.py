@@ -26,7 +26,7 @@ plt.imshow(museum_flash)
 plt.title('flash')
 plt.show()
 N = 2
-image_ambient_01 = museum_ambient
+image_ambient_01 = museum_ambient / 255
 image_ambient_01 = image_ambient_01[::N, ::N, :]
 image_flash_01 = museum_flash / 255.0
 image_flash_01 = image_flash_01[::N, ::N, :]
@@ -91,6 +91,13 @@ ambient_x, ambient_y = Gradient_Left(image_ambient_01)
 flash_x, flash_y = Gradient_Left(image_flash_01)
 M = gradient_orientation_coherency_map(image_flash_01, image_ambient_01)
 weight_satuation_map = satuation_weight_map(image_flash_01)
+ws = weight_satuation_map
+ax = ambient_y
+ay = ambient_y
+phi_prime_x = flash_x
+phi_prime_y = flash_y
+phi_star_x = ws * ax + (1 - ws) * (M * phi_prime_x + (1 - M) * ax)
+phi_star_y = ws * ay + (1 - ws) * (M * phi_prime_y + (1 - M) * ay)
 plt.subplot(1, 4, 1)
 plt.imshow(ambient_x)
 plt.subplot(1, 4, 2)
@@ -98,11 +105,57 @@ plt.imshow(ambient_x)
 plt.subplot(1, 4, 3)
 plt.imshow(M)
 plt.title('gradient coherency map')
-plt.subplot(1,4,4)
+plt.subplot(1, 4, 4)
 plt.imshow(weight_satuation_map)
 plt.title('weight satuation map')
 plt.show()
 
+plt.subplot(1, 2, 1)
+plt.imshow(phi_star_x)
+plt.title(r'$\Phi^*_x$')
+plt.subplot(1, 2, 2)
+plt.imshow(phi_star_y)
+plt.title(r'$\Phi^*_y$')
+plt.show()
+
+# cgd to solve gradietn field integration
+
+I = image_ambient_01
+phi_prime = image_flash_01
+B = get_image_boundary(I)
+I_init_star = np.zeros_like(B)
+I_boundary_star = (1 - B) * I
+I_star = B * I_init_star + (1 - B) * I_boundary_star
+ax, ay = Gradient_Left(image_ambient_01)
+phi_prime_x, phi_prime_y = Gradient_Left(image_flash_01)
+M = gradient_orientation_coherency_map(image_flash_01, image_ambient_01)
+ws = satuation_weight_map(image_flash_01)
+phi_star_x = ws * ax + (1 - ws) * (M * phi_prime_x + (1 - M) * ax)
+phi_star_y = ws * ay + (1 - ws) * (M * phi_prime_y + (1 - M) * ay)
+D = Divergence_Gradient(phi_star_x, phi_star_y)
+
+r = B * (D - Laplacian(I_star))
+d = r
+delta_new = np.sum(r * r, axis=(0, 1))
+N = 10
+eps = 10 ** -6
+for n in range(0, N):
+    if r_norm < eps:
+        break
+    q = Laplacian(d)
+    r_norm_square = np.sum(r * r, axis=(0, 1))
+    r_norm = np.sqrt(r_norm_square)
+
+
+
+
+plt.subplot(1, 2, 1)
+plt.imshow(np.abs(D))
+plt.title('Divergence ')
+plt.subplot(1, 2, 2)
+plt.imshow(np.abs(I_star))
+plt.title(r'$I^*$')
+plt.show()
 
 # # part 1 bilateral filtering
 # lamp_ambient = io.imread('data/lamp/lamp_ambient.tif')  # iso 1600
