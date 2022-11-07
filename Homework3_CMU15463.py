@@ -1,3 +1,5 @@
+import time
+
 import scipy
 from skimage import io
 from skimage import data
@@ -11,6 +13,7 @@ from skimage import color
 from RGBDomainProcessor import *
 from YUVDomainProcessor import *
 from HDR_fusion import *
+import os
 
 # part 2 gradient domain processing
 museum_ambient = io.imread('data/museum/museum_ambient.png')
@@ -137,17 +140,34 @@ D = Divergence_Gradient(phi_star_x, phi_star_y)
 r = B * (D - Laplacian(I_star))
 d = r
 delta_new = np.sum(r * r, axis=(0, 1))
-N = 10
+N = I.shape[0] * I.shape[1]
+I_star_list = []
 eps = 10 ** -6
 for n in range(0, N):
-    if r_norm < eps:
-        break
-    q = Laplacian(d)
     r_norm_square = np.sum(r * r, axis=(0, 1))
     r_norm = np.sqrt(r_norm_square)
+    if np.any(r_norm < eps):
+        break
+    q = Laplacian(d)
+    d_q_dot = np.sum(d * q, axis=(0, 1))
+    eta = delta_new / d_q_dot
+    I_star = I_star + B * (eta * d)
+    r = B * (r - eta * q)
+    delta_old = delta_new
+    delta_new = np.sum(r * r, axis=(0, 1))
+    beta = delta_new / delta_old
+    d = r + beta * d
+    I_star_list.append(I_star)
+    # plt.imshow(I_star)
+    # plt.title(f'recostruction result {n}')
+    # plt.show()
+    print(f'iteration N : {n}')
 
-
-
+for i in range(0, len(I_star_list),10):
+    plt.imshow(np.clip(I_star_list[i], 0, 1))
+    plt.title(f'recostruction {i}')
+    plt.show()
+    time.sleep(1)
 
 plt.subplot(1, 2, 1)
 plt.imshow(np.abs(D))
