@@ -177,6 +177,43 @@ def writeEXR(img_hdr, filename):
 
 
 # step 3 tone mapping with bilateral filter
+# fastbilaeral2d  input image 0 - 1 ,
+def bilateral2d_piecewise_linear(image_noise_01, range_sigma=0.4, space_sigma=0.02, kernel_size=5):
+    # image should be in float64 channel 1 , for example gray channel
+    # image has  three channes
+    I = image_noise_01.copy()
+    HEIGHT = I.shape[0]
+    WIDTH = I.shape[1]
+    maxI = np.max(I)
+    # # image = image.astype(np.float32)
+    # space_sigma = space_sigma * np.min(image.shape[:-1])
+    # range_sigma = range_sigma
+    # kernel_size = kernel_size
+    # kernel_size = np.int32(kernel_size)
+    # size = np.int32(kernel_size / 2)
+    # half_kernel_size = np.int32()
+    # smooth_kernel = gaussian_kernel(kernel_size, space_sigma)
+    # local_kernel = np.zeros((kernel_size, kernel_size), dtype=np.float64)
+    # image = np.pad(image, ((size, size), (size, size)), 'reflect')
+    # newimg = np.zeros_like(image)
+    # for x in range(0 + size, HEIGHT + size):
+    #     for y in range(0 + size, WIDTH + size):
+    #         local_img = image[x - size:x + size + 1, y - size:y + size + 1]
+    #         local_kernel = value_kernel(kernel_size, range_sigma, local_img)
+    #         kernel = smooth_kernel * local_kernel
+    #         sum = kernel.sum()
+    #         kernel_norm = kernel / sum
+    #         value = kernel_norm * local_img
+    #         newimg[x, y] = value.sum()
+    # # d = 2 * int(space_sigma) + 1
+    # # HDR_image_log_base = np.asarray(image)
+    # # HDR_image_log_base = cv2.bilateralFilter(image, d, range_sigma, space_sigma)
+    # bi_img = newimg[size:HEIGHT + size, size:WIDTH + size]
+    return I
+
+
+
+
 
 
 # fastbilaeral2d  input image 0 - 1 ,
@@ -436,17 +473,50 @@ def Laplacian(image):
     return image_lap_fil
 
 
-def Gradient_Field_Integration_CGD(ambient_image_01, flash_image_01):
+def Gradient_Field_Integration_CGD(image_ambient_01, image_flash_01):
     # ambient image  flash image shoulde be in [0 1]
     # D : divergence of Phi
     # I_init_star zeros images
     # I_init_star, B,I_boundary_star,
     #D, I_init_star, B, I_boundary_star, N=10, eps=10 ** -6
-    I = ambient_image_01
+    I = image_ambient_01
+    phi_prime = image_flash_01
     B = get_image_boundary(I)
     I_init_star = np.zeros_like(B)
     I_boundary_star = (1 - B) * I
     I_star = B * I_init_star + (1 - B) * I_boundary_star
-    I_star_lap_fil = Laplacian(I)
+    ax, ay = Gradient_Left(image_ambient_01)
+    phi_prime_x, phi_prime_y = Gradient_Left(image_flash_01)
+    M = gradient_orientation_coherency_map(image_flash_01, image_ambient_01)
+    ws = satuation_weight_map(image_flash_01)
+    phi_star_x = ws * ax + (1 - ws) * (M * phi_prime_x + (1 - M) * ax)
+    phi_star_y = ws * ay + (1 - ws) * (M * phi_prime_y + (1 - M) * ay)
+    D = Divergence_Gradient(phi_star_x, phi_star_y)
 
-    return N
+    r = B * (D - Laplacian(I_star))
+    d = r
+    delta_new = np.sum(r * r, axis=(0, 1))
+    N = I.shape[0] * I.shape[1]
+    I_star_list = []
+    eps = 10 ** -6
+    for n in range(0, N):
+        r_norm_square = np.sum(r * r, axis=(0, 1))
+        r_norm = np.sqrt(r_norm_square)
+        if np.any(r_norm < eps):
+            break
+        q = Laplacian(d)
+        d_q_dot = np.sum(d * q, axis=(0, 1))
+        eta = delta_new / d_q_dot
+        I_star = I_star + B * (eta * d)
+        r = B * (r - eta * q)
+        delta_old = delta_new
+        delta_new = np.sum(r * r, axis=(0, 1))
+        beta = delta_new / delta_old
+        d = r + beta * d
+        I_star_list.append(I_star)
+        # plt.imshow(I_star)
+        # plt.title(f'recostruction result {n}')
+        # plt.show()
+        print(f'iteration N : {n}')
+
+    return I_star_list
