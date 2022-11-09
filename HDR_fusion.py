@@ -96,9 +96,14 @@ def get_tent_weights(images):
     return weights
 
 
+@np.vectorize
 def get_hat_weights(z):
     # image value should be in  [0 1]
-    weight = np.minimum(z, 1 - z)
+    weight = 0
+    if z > 1 or z < -1:
+        weight = 0
+    else:
+        weight = np.minimum(1+z, 1 - z)
     return weight
 
 
