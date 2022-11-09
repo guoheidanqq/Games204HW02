@@ -96,6 +96,12 @@ def get_tent_weights(images):
     return weights
 
 
+def get_hat_weights(z):
+    # image value should be in  [0 1]
+    weight = np.minimum(z, 1 - z)
+    return weight
+
+
 @np.vectorize
 def w_tent(z):
     if 0 <= z <= 1:
@@ -212,10 +218,6 @@ def bilateral2d_piecewise_linear(image_noise_01, range_sigma=0.4, space_sigma=0.
     return I
 
 
-
-
-
-
 # fastbilaeral2d  input image 0 - 1 ,
 def fastbilateral2d(HDR_image_gray, range_sigma=0.4, space_sigma=0.02, kernel_size=5):
     # image should be in float64 channel 1 , for example gray channel
@@ -297,7 +299,7 @@ def bilateral2d_color(HDR_image_gray, range_sigma=0.4, space_sigma=5):
     WIDTH = image.shape[1]
 
     range_sigma = range_sigma
-    kernel_size = 4 * np.int(space_sigma) + 1
+    kernel_size = 4 * np.int32(space_sigma) + 1
     kernel_size = np.int32(kernel_size)
     size = np.int32(kernel_size / 2)
     smooth_kernel = gaussian_kernel(kernel_size, space_sigma)
@@ -335,6 +337,11 @@ def value_kernel_color(kernel_size, range_sigma, local_img):
     return norm_kernel
 
 
+def g_sigma_r(intensity, range_sigma):
+    value = np.exp(-intensity ** 2 / (2 * (range_sigma ** 2)))
+    return value
+
+
 def gaussian_kernel(kernel_size, space_sigma):
     # make sure your kernel size if odd
     kernel_size = np.int32(kernel_size)
@@ -344,6 +351,21 @@ def gaussian_kernel(kernel_size, space_sigma):
     y = np.arange(-size, size + 1)
     [xx, yy] = np.meshgrid(x, y)
     value = -(xx * xx + yy * yy) / (2 * space_sigma ** 2)
+    kernel = np.exp(value)
+    norm_sum = np.sum(kernel)
+    norm_kernel = kernel / norm_sum
+    return norm_kernel
+
+
+def gaussian_kernel_for_piecewise_bilateral(space_sigma_image_scaled):
+    # make sure your kernel size if odd
+    kernel_size = 4 * np.int32(space_sigma_image_scaled) + 1
+    kernel_size = np.int32(kernel_size)
+    size = np.int32(kernel_size / 2)
+    x = np.arange(-size, size + 1)
+    y = np.arange(-size, size + 1)
+    [xx, yy] = np.meshgrid(x, y)
+    value = -(xx * xx + yy * yy) / (2 * space_sigma_image_scaled ** 2)
     kernel = np.exp(value)
     norm_sum = np.sum(kernel)
     norm_kernel = kernel / norm_sum
@@ -430,7 +452,8 @@ def Divergence(image):
     div = Ix_x + Iy_y
     return div
 
-def Divergence_Gradient(Ix,Iy):
+
+def Divergence_Gradient(Ix, Iy):
     # Ix Iy use gradient_left to compute
     Ix_pad_x = np.pad(Ix, ((0, 1), (0, 0), (0, 0)))
     Iy_pad_y = np.pad(Iy, ((0, 0), (0, 1), (0, 0)))
@@ -473,12 +496,23 @@ def Laplacian(image):
     return image_lap_fil
 
 
+def Convolution2D(image, kernel, mode='same', boundary='fill', fillvalue=0):
+    R = image[:, :, 0]
+    G = image[:, :, 1]
+    B = image[:, :, 2]
+    R_filtered = signal.convolve2d(R, kernel, mode=mode, boundary=boundary, fillvalue=fillvalue)
+    G_filtered = signal.convolve2d(G, kernel, mode=mode, boundary=boundary, fillvalue=fillvalue)
+    B_filtered = signal.convolve2d(B, kernel, mode=mode, boundary=boundary, fillvalue=fillvalue)
+    image_processed = np.stack((R_filtered, G_filtered, B_filtered), axis=2)
+    return image_processed
+
+
 def Gradient_Field_Integration_CGD(image_ambient_01, image_flash_01):
     # ambient image  flash image shoulde be in [0 1]
     # D : divergence of Phi
     # I_init_star zeros images
     # I_init_star, B,I_boundary_star,
-    #D, I_init_star, B, I_boundary_star, N=10, eps=10 ** -6
+    # D, I_init_star, B, I_boundary_star, N=10, eps=10 ** -6
     I = image_ambient_01
     phi_prime = image_flash_01
     B = get_image_boundary(I)

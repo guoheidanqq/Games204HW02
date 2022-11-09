@@ -15,7 +15,6 @@ from YUVDomainProcessor import *
 from HDR_fusion import *
 import os
 
-
 museum_ambient = io.imread('data/museum/museum_ambient.png')
 museum_flash = io.imread('data/museum/museum_flash.png')
 museum_ambient = museum_ambient[:, :, :-1]
@@ -42,32 +41,44 @@ plt.imshow(image_flash_01)
 plt.title(f'flash image down sampling {N}')
 plt.show()
 
-
 # def bilateral2d_piecewise_linear(image_noise_01, range_sigma=0.4, space_sigma=0.02, kernel_size=
 
-range_sigma= 0.05
-space_sigma=0.02
+range_sigma = 0.05
+space_sigma = 0.02
 I = image_ambient_01.copy()
 HEIGHT = I.shape[0]
 WIDTH = I.shape[1]
-lamda = range_sigma/10
+lamda = range_sigma / 10
 I_max = np.max(I)
 I_min = np.min(I)
-NB_SEGMENTS =np.ceil((I_max-I_min)/range_sigma)
+NB_SEGMENTS = np.ceil((I_max - I_min) / range_sigma)
 NB_SEGMENTS = NB_SEGMENTS.astype(np.int32)
-intensity_delta = (I_max-I_min)/NB_SEGMENTS
-intensity = np.zeros((NB_SEGMENTS,1))
-for j in range(0,NB_SEGMENTS):
-    intensity[j] = I_min + j*intensity_delta
+intensity_delta = (I_max - I_min) / NB_SEGMENTS
+intensity = np.zeros((NB_SEGMENTS, 1))
+J = np.zeros_like(I)
+j = 1
+# for j in range(0, NB_SEGMENTS):
+intensity_j = I_min + j * intensity_delta
+G_j = g_sigma_r(I - intensity_j, range_sigma)
+space_sigma_image_size = space_sigma*np.min(I.shape[:-1])
+f_sigma_s = gaussian_kernel_for_piecewise_bilateral(space_sigma_image_size)
+K_j = Convolution2D(G_j, f_sigma_s, mode='same', boundary='fill', fillvalue=0)
+H_j = G_j * I
+H_star_j = Convolution2D(H_j,f_sigma_s, mode='same', boundary='fill', fillvalue=0)
+J_j = H_star_j/K_j
+J = J + J_j *get_hat_weights(np.abs(I -intensity_j))
 
 
 
 
+plt.imshow(K_j)
+plt.show()
 
+plt.imshow(G_j)
+plt.show()
 
-
-
-
+plt.imshow(J)
+plt.show()
 ####
 #### part 2 gradient domain processing
 ####
