@@ -1,5 +1,4 @@
 import time
-
 import scipy
 from skimage import io
 from skimage import data
@@ -56,6 +55,7 @@ NB_SEGMENTS = NB_SEGMENTS.astype(np.int32)
 intensity_delta = (I_max - I_min) / NB_SEGMENTS
 intensity = np.zeros((NB_SEGMENTS, 1))
 
+J_list = []
 J = np.zeros_like(I)
 j = 0
 for j in range(0, NB_SEGMENTS):
@@ -67,9 +67,10 @@ for j in range(0, NB_SEGMENTS):
     H_j = G_j * I
     H_star_j = Convolution2D(H_j,f_sigma_s, mode='same', boundary='fill', fillvalue=0)
     J_j = H_star_j/K_j
+    J_list.append(J_j)
     J = J + J_j *get_hat_weights(I -intensity_j)
 
-
+#I_intern = interpolate.interpn(J_list,I)
 
 
 plt.imshow(K_j)
