@@ -13,37 +13,43 @@ from RGBDomainProcessor import *
 from YUVDomainProcessor import *
 from HDR_fusion import *
 import os
+
 ## 2022 11 12
 image = io.imread('./data/chessboard_lightfield.png')
+image = image / 255
 HEIGHT = image.shape[0]
 WIDTH = image.shape[1]
-HEIGHT_sub = HEIGHT/16
-WIDTH_sub = WIDTH/16
+HEIGHT_sub = np.int32(HEIGHT / 16)
+WIDTH_sub = np.int32(WIDTH / 16)
+
+img_sub = np.zeros((HEIGHT_sub, WIDTH_sub, 3))
+image_sub_list = np.zeros((16, 16, HEIGHT_sub, WIDTH_sub, 3))
+
+for u in range(0, 16):
+    for v in range(0, 16):
+        image_sub_list[u, v, :, :, :] = image[u::16, v::16, :]
+
+N = 4
+plt.figure()
+for i in range(0, N):
+    for j in range(0, N):
+        plt.subplot(N, N, i * N + j + 1)
+        plt.imshow(image_sub_list[i, j, :, :, :])
+        plt.axis('off')
+plt.show()
+
+image_sub_to_show = np.zeros((HEIGHT, WIDTH, 3))
+for u in range(0, 16):
+    for v in range(0, 16):
+        image_sub_to_show[u * HEIGHT_sub:(u + 1) * HEIGHT_sub, \
+        v * WIDTH_sub:(v + 1) * WIDTH_sub, :] = \
+            image_sub_list[u, v, :, :, :]
+plt.imshow(image_sub_to_show)
+plt.show()
 
 plt.figure()
 plt.imshow(image)
 plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # import numpy as np
 # import matplotlib.pyplot as plt
