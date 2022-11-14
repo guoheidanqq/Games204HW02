@@ -51,6 +51,51 @@ plt.figure()
 plt.imshow(image)
 plt.show()
 
+
+lensletSize = 16
+maxUV = (lensletSize-1)/2
+u_center = np.arange(lensletSize)-maxUV
+v_center = np.arange(lensletSize)-maxUV
+
+image_refocus = np.zeros((HEIGHT_sub,WIDTH_sub,3))
+L = image_sub_list
+d = 1
+aperture = 10  # aperture < 2*maxUV
+valid = 0
+image_count = np.zeros((HEIGHT_sub,WIDTH_sub,3))
+for u in range(0,lensletSize):
+    for v in range(0,lensletSize):
+        # if u_center[u]**2 + v_center[v]**2 < (aperture/2)**2:
+        #     valid = valid + 1
+        for s in range(0,HEIGHT_sub):
+            for t in range(0,WIDTH_sub):
+                if s+d*u < HEIGHT_sub and t+d*v<WIDTH_sub:
+                    image_refocus[s,t,:] = image_refocus[s,t,:] + L[u,v,s+d*u,t+d*v,:]
+                    image_count[s,t,:] = image_count[s,t,:] + 1
+
+image_refocus = image_refocus/image_count
+plt.imshow(image_refocus)
+plt.show()
+
+# u = 5
+# v = 5
+# d = 10
+# image_refocus = np.zeros((HEIGHT_sub,WIDTH_sub,3))
+# image_count = np.zeros((HEIGHT_sub,WIDTH_sub,3))
+# for s in range(0, HEIGHT_sub):
+#     for t in range(0, WIDTH_sub):
+#         if s + d * u < HEIGHT_sub and t + d * v < WIDTH_sub:
+#             image_refocus[s, t, :] = image_refocus[s, t, :] + L[u, v, s + d * u, t + d * v, :]
+#             image_count[s, t, :] = image_count[s, t, :] + 1
+# plt.imshow(image_refocus)
+# plt.show()
+
+
+
+
+
+#create focal stack
+
 # import numpy as np
 # import matplotlib.pyplot as plt
 # from mpl_toolkits.mplot3d import Axes3D
