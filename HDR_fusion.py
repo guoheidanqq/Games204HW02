@@ -103,7 +103,7 @@ def get_hat_weights(z):
     if z > 1 or z < -1:
         weight = 0
     else:
-        weight = np.minimum(1+z, 1 - z)
+        weight = np.minimum(1 + z, 1 - z)
     return weight
 
 
@@ -559,3 +559,29 @@ def Gradient_Field_Integration_CGD(image_ambient_01, image_flash_01):
         print(f'iteration N : {n}')
 
     return I_star_list
+
+
+def get_focus_image_in_depth(L, depth=0, lensletSize=16):
+    image_typical = L[0, 0, :, :, :]
+    d = depth
+    HEIGHT_sub = image_typical.shape[0]
+    WIDTH_sub = image_typical.shape[1]
+    lensletSize = 16
+    maxUV = (lensletSize - 1) / 2
+    u_center = np.arange(lensletSize) - maxUV
+    v_center = np.arange(lensletSize) - maxUV
+    image_refocus = np.zeros((HEIGHT_sub, WIDTH_sub, 3))
+    image_count = np.zeros((HEIGHT_sub, WIDTH_sub, 3))
+    for u in range(0, lensletSize):
+        for v in range(0, lensletSize):
+            du = np.int32(d * u)
+            dv = np.int32(d * v)
+            tmpImg = np.zeros((HEIGHT_sub, WIDTH_sub, 3))
+            tmpImg[0:HEIGHT_sub - du, 0:WIDTH_sub - dv, :] = L[u, v, du:, dv:, :]
+            #tmpImg[du:, dv:, :] = L[u, v, du:, dv:, :]
+            image_refocus = image_refocus + tmpImg
+            image_count[0:HEIGHT_sub - du, 0:WIDTH_sub - dv, :] = \
+               image_count[0:HEIGHT_sub - du, 0:WIDTH_sub - dv,:] + 1
+            #image_count[du:, dv:, :] = image_count[du:, dv:, :] + 1
+    image_refocus_01 = image_refocus / image_count
+    return image_refocus_01

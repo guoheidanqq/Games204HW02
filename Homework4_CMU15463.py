@@ -59,23 +59,56 @@ v_center = np.arange(lensletSize)-maxUV
 
 image_refocus = np.zeros((HEIGHT_sub,WIDTH_sub,3))
 L = image_sub_list
-d = 1
+d = 2
 aperture = 10  # aperture < 2*maxUV
 valid = 0
 image_count = np.zeros((HEIGHT_sub,WIDTH_sub,3))
 for u in range(0,lensletSize):
     for v in range(0,lensletSize):
+        du = np.int32(d*u)
+        dv = np.int32(d*v)
+        tmpImg = np.zeros((HEIGHT_sub,WIDTH_sub,3))
+        tmpImg[0:HEIGHT_sub-du,0:WIDTH_sub-dv,:] = L[u,v,du:,dv:,:]
+        image_refocus = image_refocus + tmpImg
+        image_count[0:HEIGHT_sub-du,0:WIDTH_sub-dv,:] = image_count[0:HEIGHT_sub-du,0:WIDTH_sub-dv,:] + 1
         # if u_center[u]**2 + v_center[v]**2 < (aperture/2)**2:
         #     valid = valid + 1
-        for s in range(0,HEIGHT_sub):
-            for t in range(0,WIDTH_sub):
-                if s+d*u < HEIGHT_sub and t+d*v<WIDTH_sub:
-                    image_refocus[s,t,:] = image_refocus[s,t,:] + L[u,v,s+d*u,t+d*v,:]
-                    image_count[s,t,:] = image_count[s,t,:] + 1
+        # for s in range(0,HEIGHT_sub):
+        #     for t in range(0,WIDTH_sub):
+        #         if s+d*u < HEIGHT_sub and t+d*v<WIDTH_sub:
+        #             image_refocus[s,t,:] = image_refocus[s,t,:] + L[u,v,s+d*u,t+d*v,:]
+        #             image_count[s,t,:] = image_count[s,t,:] + 1
 
-image_refocus = image_refocus/image_count
-plt.imshow(image_refocus)
+image_refocus_01 = image_refocus/image_count
+plt.imshow(image_refocus_01)
 plt.show()
+
+
+
+DepthRange = 10
+Istd = np.zeros((HEIGHT_sub,WIDTH_sub,3,DepthRange))
+
+for d in range(0,DepthRange):
+    Istd[:,:,:,d] = get_focus_image_in_depth(L,d)
+plt.imshow(Istd[:,:,:,1])
+plt.show()
+
+
+plt.subplot(2,3,1)
+plt.imshow(Istd[:,:,:,0])
+plt.subplot(2,3,2)
+plt.imshow(Istd[:,:,:,1])
+plt.subplot(2,3,3)
+plt.imshow(Istd[:,:,:,2])
+plt.subplot(2,3,4)
+plt.imshow(Istd[:,:,:,3])
+plt.subplot(2,3,5)
+plt.imshow(Istd[:,:,:,4])
+plt.subplot(2,3,6)
+plt.imshow(Istd[:,:,:,5])
+plt.show()
+
+
 
 # u = 5
 # v = 5
