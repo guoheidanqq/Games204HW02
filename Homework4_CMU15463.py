@@ -13,6 +13,7 @@ from RGBDomainProcessor import *
 from YUVDomainProcessor import *
 from HDR_fusion import *
 import os
+from cp_hw2 import *
 
 ## 2022 11 12
 image = io.imread('./data/chessboard_lightfield.png')
@@ -92,6 +93,64 @@ for d in range(0,DepthRange):
     Istd[:,:,:,d] = get_focus_image_in_depth(L,d)
 plt.imshow(Istd[:,:,:,1])
 plt.show()
+
+I_illuminance = np.zeros((HEIGHT_sub,WIDTH_sub,DepthRange))
+I_low_freq = np.zeros((HEIGHT_sub,WIDTH_sub,DepthRange))
+I_high_freq = np.zeros((HEIGHT_sub,WIDTH_sub,DepthRange))
+w_shaprnewss = np.zeros((HEIGHT_sub,WIDTH_sub,DepthRange))
+I_all_in_focus = np.zeros((HEIGHT_sub,WIDTH_sub,3))
+depth = np.zeros((HEIGHT_sub,WIDTH_sub))
+sigma1 = 0.01 * HEIGHT_sub
+kernel_size1 = 4 * np.int32(sigma1) + 1
+gaussian_filter1 = gaussian_kernel(kernel_size1, sigma1)
+sigma2 = 0.02 * HEIGHT_sub
+kernel_size1 = 4 * np.int32(sigma2) + 1
+gaussian_filter2 = gaussian_kernel(kernel_size1, sigma2)
+for d in range(0,DepthRange):
+    xyz = lRGB2XYZ(Istd[:,:,:,d])
+    I_illuminance[:,:,d] = xyz[:,:,1]
+    I_low_freq[:,:,d] = signal.convolve2d(I_illuminance[:,:,d], gaussian_filter1,
+                                          mode='same', boundary='fill', fillvalue='0')
+    I_high_freq[:,:,d] = I_illuminance[:,:,d]-I_low_freq[:,:,d]
+    w_shaprnewss[:,:,d] = signal.convolve2d(I_high_freq[:,:,d], gaussian_filter2,
+                                          mode='same', boundary='fill', fillvalue='0')
+
+
+nominator = np.zeros((HEIGHT_sub,WIDTH_sub))
+denominator = np.zeros((HEIGHT_sub,WIDTH_sub))
+
+for d in range(0,DepthRange):
+    denominator = denominator + w_shaprnewss[:,:,d]
+    nominator = nominator + w_shaprnewss[:,:,d]*d
+    I_all_in_focus = np.dstack((w_shaprnewss[:,:,d],
+                                w_shaprnewss[:,:,d],w_shaprnewss[:,:,d]))*Istd[:,:,:,d]
+
+
+depth = nominator/denominator
+I_all_in_focus = I_all_in_focus/ np.dstack((denominator,denominator,denominator))
+depth = np.clip(depth,0,DepthRange-1)
+
+plt.imshow(depth/DepthRange,cmap='gray')
+plt.show()
+
+plt.imshow(I_all_in_focus)
+plt.show()
+
+
+
+
+plt.imshow(w_shaprnewss[:,:,1],cmap='gray')
+plt.show()
+plt.imshow(I_illuminance[:,:,1],cmap='gray')
+plt.show()
+plt.imshow(I_high_freq[:,:,1],cmap='gray')
+plt.show()
+
+
+
+
+
+
 
 
 plt.subplot(2,3,1)
