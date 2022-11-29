@@ -15,125 +15,125 @@ from matplotlib.patches import Rectangle
 from cp_hw2 import *
 
 # imread to images list
-images = []
-for i in range(1, 17):
-    filename = 'data/door_stack/exposure' + str(i) + '.tiff'
-    imgTmp = io.imread(filename)
-    imgTmp = imgTmp.astype(np.float32)
-    imgTmpNormalized01 = imgTmp / (2 ** 16 - 1)
-    images.append(imgTmpNormalized01)
-
-ex_times = []
-for i in range(1, 17):
-    ex_time = 2 ** (i - 1) / 2048
-    ex_times.append(ex_time)
-exposure_times = np.array(ex_times)
-
-# display images list
+# images = []
 # for i in range(1, 17):
-#     plt.subplot(4, 4, i)
-#     plt.imshow(images[i - 1])
-#     plt.axis('off')
-# plt.show()
-
-masks = compute_mask_01(images)
-weights = get_gaussian_weights(images)
-fuse_image = raw_exposure_fuse_01(images, weights, exposure_times)
-
+#     filename = 'data/door_stack/exposure' + str(i) + '.tiff'
+#     imgTmp = io.imread(filename)
+#     imgTmp = imgTmp.astype(np.float32)
+#     imgTmpNormalized01 = imgTmp / (2 ** 16 - 1)
+#     images.append(imgTmpNormalized01)
 #
-fuse_image_01 = fuse_image / np.max(fuse_image)
-fuse_image_gamma = np.power(fuse_image_01, 0.45)
-
-plt.imshow(fuse_image_gamma * 10)
-# [x,y] = plt.ginput()
-# row 1
-plt.gca().add_patch(Rectangle((3310, 625), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3485, 625), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3635, 625), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3785, 625), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-# row2
-plt.gca().add_patch(Rectangle((3310, 800), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3485, 800), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3635, 800), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3785, 800), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-# row3
-plt.gca().add_patch(Rectangle((3310, 950), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3485, 950), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3635, 950), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3785, 950), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-# row4
-plt.gca().add_patch(Rectangle((3310, 1125), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3485, 1125), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3635, 1125), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3785, 1125), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-# row5
-plt.gca().add_patch(Rectangle((3310, 1275), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3485, 1275), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3635, 1275), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3785, 1275), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-# row6
-plt.gca().add_patch(Rectangle((3310, 1450), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3485, 1450), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3635, 1450), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.gca().add_patch(Rectangle((3785, 1450), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
-plt.show()
-
-# create rectangle patches
-
-color_set = read_color_checker_from_image(fuse_image_01)
-r, g, b = read_colorchecker_gm()
-color_checker_4_6 = np.stack((r, g, b), axis=2)
-plt.imshow(color_checker_4_6)
-plt.show()
-
-plt.imshow(np.clip(fuse_image_01*2000,0,1))
-plt.show()
-
-color_checker_gm_50_50 = np.zeros_like(color_set)
-for i in range(0, 4):
-    for j in range(0, 6):
-        color_checker_gm_50_50[i * 50:i * 50 + 50, j * 50:j * 50 + 50] = color_checker_4_6[i, j]
-
-
-plt.imshow(color_set*1000)
-plt.show()
-plt.imshow(color_checker_gm_50_50)
-plt.show()
-
-# construct A  4 * 60000
-# construct b
-# and use lstsq to solve color correction matrix
-homo_ones_matrix = np.ones((color_set.shape[0], color_set.shape[1]))
-color_set_homo = np.stack((color_set[:, :, 0], color_set[:, :, 1], color_set[:, :, 0], homo_ones_matrix), axis=2)
-color_checker_gm_50_50_homo = np.stack(
-    (color_checker_gm_50_50[:, :, 0], color_checker_gm_50_50[:, :, 1], color_checker_gm_50_50[:, :, 2],
-     homo_ones_matrix), axis=2)
-A = color_set_homo.reshape(-1,4)
-b = color_checker_gm_50_50_homo.reshape(-1,4)
-X = np.linalg.lstsq(A,b,rcond=None)
-color_correction_matrix = X[0]
-
-
-
-
-
-
-plt.imshow(color_set / np.max(color_set))
-plt.show()
-plt.imshow(images[15])
-plt.show()
-
-img = fuse_image_01.reshape(-1,3)
-img = np.hstack((img,np.ones((img.shape[0],1))))
-img_corrected = img@color_correction_matrix
-img_corrected = img_corrected[:,0:3]
-img_corrected = img_corrected.reshape(fuse_image_01.shape)
-
-plt.imshow(np.clip(fuse_image_01*2000,0,1))
-plt.show()
-
-plt.imshow(np.clip(img_corrected,0,1))
-plt.show()
+# ex_times = []
+# for i in range(1, 17):
+#     ex_time = 2 ** (i - 1) / 2048
+#     ex_times.append(ex_time)
+# exposure_times = np.array(ex_times)
+#
+# # display images list
+# # for i in range(1, 17):
+# #     plt.subplot(4, 4, i)
+# #     plt.imshow(images[i - 1])
+# #     plt.axis('off')
+# # plt.show()
+#
+# masks = compute_mask_01(images)
+# weights = get_gaussian_weights(images)
+# fuse_image = raw_exposure_fuse_01(images, weights, exposure_times)
+#
+# #
+# fuse_image_01 = fuse_image / np.max(fuse_image)
+# fuse_image_gamma = np.power(fuse_image_01, 0.45)
+#
+# plt.imshow(fuse_image_gamma * 10)
+# # [x,y] = plt.ginput()
+# # row 1
+# plt.gca().add_patch(Rectangle((3310, 625), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3485, 625), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3635, 625), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3785, 625), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# # row2
+# plt.gca().add_patch(Rectangle((3310, 800), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3485, 800), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3635, 800), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3785, 800), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# # row3
+# plt.gca().add_patch(Rectangle((3310, 950), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3485, 950), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3635, 950), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3785, 950), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# # row4
+# plt.gca().add_patch(Rectangle((3310, 1125), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3485, 1125), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3635, 1125), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3785, 1125), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# # row5
+# plt.gca().add_patch(Rectangle((3310, 1275), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3485, 1275), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3635, 1275), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3785, 1275), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# # row6
+# plt.gca().add_patch(Rectangle((3310, 1450), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3485, 1450), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3635, 1450), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.gca().add_patch(Rectangle((3785, 1450), 50, 50, linewidth=1, edgecolor='r', facecolor='none'))
+# plt.show()
+#
+# # create rectangle patches
+#
+# color_set = read_color_checker_from_image(fuse_image_01)
+# r, g, b = read_colorchecker_gm()
+# color_checker_4_6 = np.stack((r, g, b), axis=2)
+# plt.imshow(color_checker_4_6)
+# plt.show()
+#
+# plt.imshow(np.clip(fuse_image_01*2000,0,1))
+# plt.show()
+#
+# color_checker_gm_50_50 = np.zeros_like(color_set)
+# for i in range(0, 4):
+#     for j in range(0, 6):
+#         color_checker_gm_50_50[i * 50:i * 50 + 50, j * 50:j * 50 + 50] = color_checker_4_6[i, j]
+#
+#
+# plt.imshow(color_set*1000)
+# plt.show()
+# plt.imshow(color_checker_gm_50_50)
+# plt.show()
+#
+# # construct A  4 * 60000
+# # construct b
+# # and use lstsq to solve color correction matrix
+# homo_ones_matrix = np.ones((color_set.shape[0], color_set.shape[1]))
+# color_set_homo = np.stack((color_set[:, :, 0], color_set[:, :, 1], color_set[:, :, 0], homo_ones_matrix), axis=2)
+# color_checker_gm_50_50_homo = np.stack(
+#     (color_checker_gm_50_50[:, :, 0], color_checker_gm_50_50[:, :, 1], color_checker_gm_50_50[:, :, 2],
+#      homo_ones_matrix), axis=2)
+# A = color_set_homo.reshape(-1,4)
+# b = color_checker_gm_50_50_homo.reshape(-1,4)
+# X = np.linalg.lstsq(A,b,rcond=None)
+# color_correction_matrix = X[0]
+#
+#
+#
+#
+#
+#
+# plt.imshow(color_set / np.max(color_set))
+# plt.show()
+# plt.imshow(images[15])
+# plt.show()
+#
+# img = fuse_image_01.reshape(-1,3)
+# img = np.hstack((img,np.ones((img.shape[0],1))))
+# img_corrected = img@color_correction_matrix
+# img_corrected = img_corrected[:,0:3]
+# img_corrected = img_corrected.reshape(fuse_image_01.shape)
+#
+# plt.imshow(np.clip(fuse_image_01*2000,0,1))
+# plt.show()
+#
+# plt.imshow(np.clip(img_corrected,0,1))
+# plt.show()
 
 
 #
@@ -289,82 +289,92 @@ plt.show()
 
 
 # noise calibration
-# noise_images = []
-# for i in range(1, 51):
-#     numstr = str(i).zfill(2)
-#     filename = 'data/blacknoise/' + numstr + '.tiff'
-#     imgTmp = io.imread(filename)
-#     if imgTmp.shape[0] < imgTmp.shape[1]:
-#         imgTmp = np.transpose(imgTmp, [1, 0, 2])
-#     noise_images.append(imgTmp)
-#
-# clip_min = 64
-# clip_max = 1023
-# paper_images = []
-# for i in range(1, 51):
-#     numstr = str(i).zfill(2)
-#     filename = 'data/whitepaper/' + numstr + '.tiff'
-#     imgTmp = io.imread(filename)
-#     if imgTmp.shape[0] < imgTmp.shape[1]:
-#         imgTmp = np.transpose(imgTmp, (1, 0, 2))
-#     imgTmp
-#     paper_images.append(imgTmp)
-#
-# black_frame = np.zeros_like(noise_images[0], np.float32)
-# for i in range(0, 50):
-#     black_frame = black_frame + noise_images[i]
-# black_frame = black_frame / 50
-# black_frame = black_frame.astype(np.uint16)
-# paper_images_noise_calibration = []
-# for i in range(0, 50):
-#     tmp_noise_calibration = paper_images[i].astype(np.float32) - black_frame.astype(np.float32)
-#     paper_images_noise_calibration.append(tmp_noise_calibration)
-#
-# # caculate mean image and variance image for each pixel
-# images = paper_images_noise_calibration
-# images_mean = np.zeros_like(images[0], dtype=np.float32)
-# images_variance = np.zeros_like(images[0], dtype=np.float32)
-# for i in range(0, 50):
-#     images_mean = images_mean + images[i]
-#
-# images_mean = images_mean / 50
-#
-# for i in range(0, 50):
-#     images_variance = images_variance + (images[i] - images_mean) ** 2
-#
-# images_variance = 1.0 / (50.0 - 1) * images_variance
-#
-# xx = images_mean.reshape(-1)
-# yy = images_variance.reshape(-1)
-# a,b = np.polyfit(xx,yy,1)
-# plt.scatter(xx, yy)
-# plt.scatter(xx,a*xx + b)
-# plt.show()
-#
-# #line fit
-#
-#
-#
-# plt.imshow(black_frame / np.max(black_frame))
-# plt.show()
-#
-# plt.imshow(paper_images[3] / np.max(paper_images[3]))
-# plt.show()
-#
-# plt.imshow(paper_images_noise_calibration[3] / np.max(paper_images_noise_calibration[3]))
-# plt.show()
-# # plot the histogram of noise
-# local_img = black_frame[::, 0]
-# a = local_img.reshape(-1)
-# plt.hist(a, bins=255)
-# plt.show()
-#
-# plt.imshow(paper_images_noise_calibration[1] / 2 ** 16)
-# plt.show()
-#
-# #show mean image
-# plt.imshow(np.sqrt(images_mean/np.max(images_mean)))
-# plt.show()
-# #show variance image
-# plt.imshow(np.sqrt(images_variance/np.max(images_variance)))
-# plt.show()
+noise_images = []
+for i in range(1, 51):
+    numstr = str(i).zfill(2)
+    filename = 'data/blacknoise/' + numstr + '.tiff'
+    imgTmp = io.imread(filename)
+    if imgTmp.shape[0] < imgTmp.shape[1]:
+        imgTmp = np.transpose(imgTmp, [1, 0, 2])
+    noise_images.append(imgTmp)
+
+clip_min = 64
+clip_max = 1023
+paper_images = []
+for i in range(1, 51):
+    numstr = str(i).zfill(2)
+    filename = 'data/whitepaper/' + numstr + '.tiff'
+    imgTmp = io.imread(filename)
+    if imgTmp.shape[0] < imgTmp.shape[1]:
+        imgTmp = np.transpose(imgTmp, (1, 0, 2))
+    imgTmp
+    paper_images.append(imgTmp)
+
+black_frame = np.zeros_like(noise_images[0], np.float32)
+for i in range(0, 50):
+    black_frame = black_frame + noise_images[i]
+black_frame = black_frame / 50
+black_frame = black_frame.astype(np.uint16)
+
+black_frame_sub_blacklevel = (black_frame-61)
+black_frame_sub_blacklevel_double = black_frame_sub_blacklevel.astype(np.float32)
+plt.imshow(black_frame_sub_blacklevel_double/3)
+plt.show()
+
+
+paper_images_noise_calibration = []
+for i in range(0, 50):
+    tmp_noise_calibration = paper_images[i].astype(np.float32) - black_frame.astype(np.float32)
+    paper_images_noise_calibration.append(tmp_noise_calibration)
+
+# caculate mean image and variance image for each pixel
+images = paper_images_noise_calibration
+images_mean = np.zeros_like(images[0], dtype=np.float32)
+images_variance = np.zeros_like(images[0], dtype=np.float32)
+for i in range(0, 50):
+    images_mean = images_mean + images[i]
+
+images_mean = images_mean / 50
+
+for i in range(0, 50):
+    images_variance = images_variance + (images[i] - images_mean) ** 2
+
+images_variance = 1.0 / (50.0 - 1) * images_variance
+
+xx = images_mean.reshape(-1)
+yy = images_variance.reshape(-1)
+N = 100000000
+xx = xx[1:N]
+yy=yy[1:N]
+a,b = np.polyfit(xx,yy,deg=1)
+plt.scatter(xx, yy)
+plt.scatter(xx,a*xx + b)
+plt.show()
+
+#line fit
+
+
+
+plt.imshow(black_frame / np.max(black_frame))
+plt.show()
+
+plt.imshow(paper_images[3] / np.max(paper_images[3]))
+plt.show()
+
+plt.imshow(paper_images_noise_calibration[3] / np.max(paper_images_noise_calibration[3]))
+plt.show()
+# plot the histogram of noise
+local_img = black_frame[::, 0]
+a = local_img.reshape(-1)
+plt.hist(a, bins=255)
+plt.show()
+
+plt.imshow(paper_images_noise_calibration[1] / 2 ** 16)
+plt.show()
+
+#show mean image
+plt.imshow(np.sqrt(images_mean/np.max(images_mean)))
+plt.show()
+#show variance image
+plt.imshow(np.sqrt(images_variance/np.max(images_variance)))
+plt.show()
