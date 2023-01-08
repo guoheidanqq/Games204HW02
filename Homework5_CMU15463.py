@@ -51,6 +51,16 @@ plt.imshow(XYZ[...,1])
 plt.show()
 
 
+# light matrix L
+L = np.zeros((3,7))
+LT = L.T
+# psudo normal matrix B
+B = np.zeros((3,P))
+I=LT@B
+
+
+
+
 #step plot surface of reconstructed image
 z = Y[..., 1]
 HEIGHT = z.shape[0]
