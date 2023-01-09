@@ -58,6 +58,11 @@ LT = L.T
 B = np.zeros((3,P))
 I=LT@B
 
+U,S,V = np.linalg.svd(Y_7P,full_matrices=False)
+S_reduce = np.zeros_like(S)
+S_reduce[0:3] = S[0:3]
+Y_7P_recon = U@S@V
+
 
 
 
